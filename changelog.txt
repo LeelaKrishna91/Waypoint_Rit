@@ -1,0 +1,24 @@
+==================================================
+Date: 2026-04-09
+Time: 20:25 PM
+
+Changes Implemented:
+- Backend: Diagnosed virtual environment execution issues. Installed required dependencies (fastAPI, uvicorn, etc.) directly into the correct `.venv` by explicitly using the `pip` executable from the virtual environment path.
+- Frontend (HTML): Added the structural layout for an absolute positioned `div#side-menu` beneath the map view in `index.html`. It contains Blocks, Rooms, Staffs, Events, and Contact menu items. Included a `menu-overlay` for better focus when the menu is active.
+- Frontend (CSS): Authored glassmorphism styles and smooth sliding animation transitions for the side menu natively in `style.css`, matching the existing map UI guidelines.
+- Frontend (JS): Added interaction logic in `app.js` to open and close the Side Menu via the existing Hamburger icon. 
+- API Integration: Created `populateMenu()` in `app.js` to asynchronously fetch data from `/admin/buildings` and `/admin/rooms` and populate the "Blocks" and "Rooms" modules. 
+- Map Action Flow: Hooked up the module options inside the menu so clicking an individual room or block invokes `locateLocation()`, closing the menu and zooming directly to the requested coordinate.
+- Graceful Degradation: Added transient placeholder "Coming Soon" alerts into the interactive search bar for "Staffs", "Events", and "Contact" since their backend equivalents don't currently exist.
+- Changed the Side Menu drawer title from "Campus Nav" to "Waypoint RIT".
+- UI/UX Polish: Added a branded global Splash Loading Screen while campus 3D data and APIs initialize.
+- UI/UX Polish: Implemented an animated Toast Notification system to replace static text-box placeholder feedback, vastly improving user feedback on searches and invalid queries.
+- UI/UX Polish: Styled native scrollbars matching the glassmorphism theme.
+- Map Physics: Implemented a geographic bounding box (`maxBounds`) and `minZoom` constraint to restrict user camera panning strictly to the RIT Campus.
+- Map Masking: Extracted the specific campus coordinates and created a GeoJSON Inverse Polygon Mask layer (`world-mask`). This completely blanks out the rest of the world's map tiles, isolating only your campus structures and providing a hyper-focused UI.
+- Dark Mode Themes: Added a Mode toggle to the side menu. Clicking it dynamically switches Mapbox styles out for `dark-v11` and changes the 3D building shells to a sleek slate-grey, while also darkening the UI components natively via `.dark-theme` CSS logic.
+- Map Restraints: Maximized map camera bounds (`16.5 minZoom`) uniquely hugging the mask hole coordinate boundaries (`[80.036, 13.034]` / `[80.053, 13.045]`) so users physically cannot pan outside the campus bounds or see edges.
+- Live Announcements Panel: Created a new dynamic floating panel on the left side of the screen. Leveraging the existing `/live-data` API, it actively polls for and displays real-time admin status messages seamlessly.
+- 3D Perimeter Wall: Integrated Turf.js into the frontend to generate a dynamic 5-meter-tall 3D wall strictly bordering the campus coordinates, complete with a 20-meter gap mathematically hollowed out at the main entrance coordinates.
+- Mapbox Studio Admin Integration: Injected `mapbox-gl-draw` directly into `admin.html`. The CMS now features a live satellite map modal allowing admins to literally draw building/room boundaries with their mouse and automatically generate exact GeoJSON footprint arrays.
+==================================================
