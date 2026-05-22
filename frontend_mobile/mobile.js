@@ -1,3 +1,7 @@
+const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:8000"
+    : "https://waypoint-rit-backend.onrender.com";
+
 document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
     // 0. TOAST NOTIFICATIONS & UI HELPERS
@@ -366,7 +370,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Dynamic Database Fetching
     async function refreshCampusData() {
         try {
-            const bRes = await fetch('http://127.0.0.1:8000/admin/buildings');
+            const bRes = await fetch(`${API_URL}/admin/buildings`);
             buildingsData = await bRes.json();
             let features = [];
 
@@ -414,7 +418,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Rooms fetching
             try {
-                const rRes = await fetch('http://127.0.0.1:8000/admin/rooms');
+                const rRes = await fetch(`${API_URL}/admin/rooms`);
                 if (rRes.ok) {
                     const rooms = await rRes.json();
                     rooms.forEach(r => {
@@ -529,7 +533,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         listDiv.innerHTML = '<p style="font-size: 0.8rem; color: #94a3b8;">Loading rooms...</p>';
 
         try {
-            const res = await fetch('http://127.0.0.1:8000/admin/rooms');
+            const res = await fetch(`${API_URL}/admin/rooms`);
             if (res.ok) {
                 const rooms = await res.json();
                 const filtered = rooms.filter(r => r.building_id === buildingId && r.floor_level === floorLevel);
@@ -584,7 +588,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     async function populateMenuDirectories() {
         try {
             // 1. Accordion Blocks Directory
-            const bRes = await fetch('http://127.0.0.1:8000/admin/buildings');
+            const bRes = await fetch(`${API_URL}/admin/buildings`);
             if (bRes.ok) {
                 const buildings = await bRes.json();
                 const blocksList = document.getElementById('mobile-blocks-list');
@@ -604,7 +608,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // 2. Accordion Rooms Directory
-            const rRes = await fetch('http://127.0.0.1:8000/admin/rooms');
+            const rRes = await fetch(`${API_URL}/admin/rooms`);
             if (rRes.ok) {
                 const rooms = await rRes.json();
                 const roomsList = document.getElementById('mobile-rooms-directory');
@@ -643,7 +647,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     async function fetchAnnouncements() {
         const list = document.getElementById('mobile-announcements-list');
         try {
-            const res = await fetch('http://127.0.0.1:8000/live-data');
+            const res = await fetch(`${API_URL}/live-data`);
             const messages = await res.json();
             list.innerHTML = '';
 
@@ -717,7 +721,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             searchBar.placeholder = "Calculating map path...";
             searchBar.value = query;
 
-            const res = await fetch(`http://127.0.0.1:8000/search/${query}`);
+            const res = await fetch(`${API_URL}/search/${query}`);
             if (!res.ok) throw new Error("Location not found.");
 
             const data = await res.json();

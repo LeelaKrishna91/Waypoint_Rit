@@ -1,3 +1,7 @@
+const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:8000"
+    : "https://waypoint-rit-backend.onrender.com";
+
 document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
     // 0. TOAST NOTIFICATIONS & UI HELPERS
@@ -31,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
     async function fetchAnnouncements() {
         try {
-            const msgRes = await fetch('http://127.0.0.1:8000/live-data');
+            const msgRes = await fetch(`${API_URL}/live-data`);
             const messages = await msgRes.json();
             const listEl = document.getElementById('announcement-list');
             listEl.innerHTML = ''; // Clear existing
@@ -287,7 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function refreshCampusData() {
         try {
-            const bRes = await fetch('http://127.0.0.1:8000/admin/buildings');
+            const bRes = await fetch(`${API_URL}/admin/buildings`);
             const buildings = await bRes.json();
             let features = [];
 
@@ -332,7 +336,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
 
             try {
-                const rRes = await fetch('http://127.0.0.1:8000/admin/rooms');
+                const rRes = await fetch(`${API_URL}/admin/rooms`);
                 if (rRes.ok) {
                     const rooms = await rRes.json();
                     rooms.forEach(r => {
@@ -474,7 +478,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             searchBar.placeholder = "Calculating coordinates...";
             searchBar.value = query;
 
-            const response = await fetch(`http://127.0.0.1:8000/search/${query}`);
+            const response = await fetch(`${API_URL}/search/${query}`);
             if (!response.ok) throw new Error("Location not found.");
 
             const locationData = await response.json();
@@ -612,7 +616,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     async function populateMenu() {
         try {
             // Populate Blocks
-            const bRes = await fetch('http://127.0.0.1:8000/admin/buildings');
+            const bRes = await fetch(`${API_URL}/admin/buildings`);
             if (bRes.ok) {
                 const buildings = await bRes.json();
                 const blocksList = document.getElementById('blocks-list');
@@ -631,7 +635,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // Populate Rooms
-            const rRes = await fetch('http://127.0.0.1:8000/admin/rooms');
+            const rRes = await fetch(`${API_URL}/admin/rooms`);
             if (rRes.ok) {
                 const rooms = await rRes.json();
                 const roomsList = document.getElementById('rooms-list');

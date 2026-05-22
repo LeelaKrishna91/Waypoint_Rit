@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from typing import Optional
 import mysql.connector
 
+import os
+
 app = FastAPI()
 
 app.add_middleware(
@@ -14,12 +16,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Load database config from environment variables (useful for Render deployment)
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_USER = os.environ.get("DB_USER", "root")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "leela")
+DB_DATABASE = os.environ.get("DB_DATABASE", "waypoint_rit")
+DB_PORT = int(os.environ.get("DB_PORT", "3306"))
+
 def get_db_connection():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="leela", # 🚨 CHANGE THIS
-        database="waypoint_rit"
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_DATABASE,
+        port=DB_PORT
     )
 
 # --- MODELS ---
