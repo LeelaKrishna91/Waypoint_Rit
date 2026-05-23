@@ -43,6 +43,35 @@ class MessageModel(BaseModel):
 @app.get("/")
 def read_root(): return {"status": "Backend is running!"}
 
+@app.get("/debug-db")
+def debug_db():
+    import traceback
+    config = {
+        "host": DB_HOST,
+        "user": DB_USER,
+        "database": DB_DATABASE,
+        "port": DB_PORT,
+        "password_provided": bool(DB_PASSWORD)
+    }
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        conn.close()
+        return {
+            "status": "Success",
+            "message": "Successfully connected to the database!",
+            "config": config
+        }
+    except Exception as e:
+        return {
+            "status": "Error",
+            "message": str(e),
+            "traceback": traceback.format_exc(),
+            "config": config
+        }
+
 # --- GET ENDPOINTS (Frontend & Admin) ---
 @app.get("/admin/buildings")
 def get_buildings():
