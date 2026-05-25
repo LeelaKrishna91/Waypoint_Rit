@@ -6,12 +6,12 @@ services:
     startCommand: python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DB_HOST
-        sync: false
+        value: gateway01.ap-southeast-1.prod.aws.tidbcloud.com
       - key: DB_USER
-        sync: false
+        value: 36By4Fv9oDvu23Z.root
       - key: DB_PASSWORD
         sync: false
       - key: DB_DATABASE
-        sync: false
+        value: waypoint_rit
       - key: DB_PORT
-        value: 3306
+        value: 4000
