@@ -786,6 +786,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             searchBar.placeholder = "Search rooms, blocks, facilities...";
             showToast(`Found: ${title}`, "info");
 
+            // Show Routing Panel
+            const mainSearchBox = document.getElementById('main-search-box');
+            if (mainSearchBox) mainSearchBox.style.display = 'none';
+            
+            const routingPanel = document.getElementById('routing-panel');
+            if (routingPanel) routingPanel.style.display = 'flex';
+            
+            const routeToField = document.getElementById('route-to');
+            if (routeToField) routeToField.value = title;
+
         } catch (e) {
             console.error("Search locating error: ", e);
             searchBar.value = '';
@@ -867,5 +877,34 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
         requestAnimationFrame(tickScanner);
+    }
+    // ==========================================
+    // 12. ROUTING PANEL LOGIC FOR MOBILE
+    // ==========================================
+    const closeRouteBtn = document.getElementById('close-route-btn');
+    const swapRouteBtn = document.getElementById('swap-route-btn');
+    const startNavBtn = document.getElementById('start-nav-btn');
+    const routeFrom = document.getElementById('route-from');
+    const routeTo = document.getElementById('route-to');
+
+    if (closeRouteBtn) {
+        closeRouteBtn.addEventListener('click', () => {
+            document.getElementById('routing-panel').style.display = 'none';
+            document.getElementById('main-search-box').style.display = 'block';
+        });
+    }
+
+    if (swapRouteBtn) {
+        swapRouteBtn.addEventListener('click', () => {
+            const temp = routeFrom.value;
+            routeFrom.value = routeTo.value;
+            routeTo.value = temp;
+        });
+    }
+
+    if (startNavBtn) {
+        startNavBtn.addEventListener('click', () => {
+            showToast("Navigation started! (Pathfinding API integration coming soon)", "info");
+        });
     }
 });
