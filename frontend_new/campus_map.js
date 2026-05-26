@@ -93,6 +93,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     let activeBuildingId = null;
     let is3D = true;
     let markersList = []; // Track all markers for cleanup
+    let userLocationMarker = null;
+    let watchId = null;
+    let isTrackingLocation = false;
 
     // ==========================================
     // 3. 3D X-RAY DATA ENGINE & POI MARKERS
@@ -448,8 +451,71 @@ document.addEventListener("DOMContentLoaded", async () => {
         e.target.style.color = is3D ? '#64748b' : '#38bdf8';
     });
 
-    document.getElementById('recenter-btn').addEventListener('click', () => {
-        window.outdoorMap.flyTo({ center: ritCenter, zoom: 17.5, pitch: 60, bearing: -20 });
+    const recenterBtn = document.getElementById('recenter-btn');
+    recenterBtn.addEventListener('click', () => {
+        if (isTrackingLocation) {
+            // Stop tracking
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            if (userLocationMarker) {
+                userLocationMarker.remove();
+                userLocationMarker = null;
+            }
+            isTrackingLocation = false;
+            recenterBtn.style.color = '';
+            showToast("Location tracking paused.", "info");
+        } else {
+            // Start tracking
+            if (!navigator.geolocation) {
+                showToast("Geolocation is not supported by your device.", "error");
+                return;
+            }
+
+            recenterBtn.style.color = '#38bdf8';
+            showToast("Locating your device...", "info");
+
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    
+                    // RIT campus limits rough verification
+                    const inLatitude = latitude > 13.033 && latitude < 13.047;
+                    const inLongitude = longitude > 80.035 && longitude < 80.055;
+
+                    if (!userLocationMarker) {
+                        const pulseDot = document.createElement('div');
+                        pulseDot.className = 'glowing-pin';
+                        
+                        userLocationMarker = new mapboxgl.Marker(pulseDot)
+                            .setLngLat([longitude, latitude])
+                            .addTo(window.outdoorMap);
+                    } else {
+                        userLocationMarker.setLngLat([longitude, latitude]);
+                    }
+
+                    if (inLatitude && inLongitude) {
+                        window.outdoorMap.easeTo({
+                            center: [longitude, latitude],
+                            zoom: 18,
+                            duration: 1000
+                        });
+                    } else {
+                        showToast("Located! (Outside RIT campus range)", "warning");
+                    }
+
+                    isTrackingLocation = true;
+                },
+                (error) => {
+                    console.error("GPS Error: ", error);
+                    showToast("Failed to acquire GPS coordinates.", "error");
+                    recenterBtn.style.color = '';
+                    isTrackingLocation = false;
+                },
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+            );
+        }
     });
 
     document.getElementById('exit-building-btn').addEventListener('click', () => {
@@ -551,6 +617,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             searchBar.value = '';
             showToast(`Target Acquired: ${title}`, 'info');
+
+            // Show Routing Panel
+            const mainSearchBox = document.getElementById('main-search-box');
+            if (mainSearchBox) mainSearchBox.style.display = 'none';
+            
+            const routingPanel = document.getElementById('routing-panel');
+            if (routingPanel) routingPanel.style.display = 'flex';
+            
+            const routeToField = document.getElementById('route-to');
+            if (routeToField) routeToField.value = title;
 
         } catch (error) {
             console.error("Search error:", error);
@@ -734,4 +810,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     scanBtn.addEventListener('click', startScanner);
     closeScannerBtn.addEventListener('click', stopScanner);
+
+    // ==========================================
+    // 10. ROUTING PANEL LOGIC
+    // ==========================================
+    const closeRouteBtn = document.getElementById('close-route-btn');
+    const swapRouteBtn = document.getElementById('swap-route-btn');
+    const startNavBtn = document.getElementById('start-nav-btn');
+    const routeFrom = document.getElementById('route-from');
+    const routeTo = document.getElementById('route-to');
+
+    if (closeRouteBtn) {
+        closeRouteBtn.addEventListener('click', () => {
+            document.getElementById('routing-panel').style.display = 'none';
+            document.getElementById('main-search-box').style.display = 'flex';
+        });
+    }
+
+    if (swapRouteBtn) {
+        swapRouteBtn.addEventListener('click', () => {
+            const temp = routeFrom.value;
+            routeFrom.value = routeTo.value;
+            routeTo.value = temp;
+        });
+    }
+
+    if (startNavBtn) {
+        startNavBtn.addEventListener('click', () => {
+            showToast("Navigation started! (Pathfinding API integration coming soon)", "info");
+        });
+    }
 });

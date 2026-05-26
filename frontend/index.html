@@ -28,7 +28,7 @@
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <div class="floating-search-box">
+    <div class="floating-search-box" id="main-search-box">
         <i class="fa-solid fa-bars menu-icon"></i>
         <input type="text" id="search-bar" placeholder="Search for rooms, staff, or places...">
         <div class="search-actions">
@@ -36,6 +36,27 @@
             <button class="icon-btn" title="Filter"><i class="fa-solid fa-sliders"></i></button>
             <button class="icon-btn action-blue" title="Directions"><i
                     class="fa-solid fa-diamond-turn-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Routing Panel -->
+    <div id="routing-panel" class="routing-panel glass-panel" style="display: none;">
+        <div class="routing-inputs">
+            <div class="routing-icons">
+                <i class="fa-regular fa-circle-dot from-icon"></i>
+                <div class="route-line"></div>
+                <i class="fa-solid fa-location-dot to-icon"></i>
+            </div>
+            <div class="routing-fields">
+                <input type="text" id="route-from" placeholder="From (e.g. My Location)" value="My Location">
+                <div class="routing-divider"></div>
+                <input type="text" id="route-to" placeholder="To (e.g. Room 101)">
+            </div>
+            <button class="icon-btn swap-btn" id="swap-route-btn" title="Swap"><i class="fa-solid fa-arrow-right-arrow-left fa-rotate-90"></i></button>
+        </div>
+        <div class="routing-actions">
+            <button class="nav-btn primary-btn" id="start-nav-btn"><i class="fa-solid fa-location-arrow"></i> Start</button>
+            <button class="icon-btn close-route-btn" id="close-route-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
         </div>
     </div>
 

@@ -139,6 +139,123 @@ body {
     color: #0ea5e9;
 }
 
+/* Routing Panel */
+.routing-panel {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 500px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.routing-inputs {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    position: relative;
+}
+
+.routing-icons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    color: #94a3b8;
+}
+
+.from-icon {
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.to-icon {
+    color: #ef4444;
+    font-size: 1.1rem;
+}
+
+.route-line {
+    width: 2px;
+    flex-grow: 1;
+    background-color: #e2e8f0;
+    margin: 5px 0;
+    border-radius: 2px;
+}
+
+.routing-fields {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.routing-fields input {
+    background: transparent;
+    border: none;
+    color: #334155;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    width: 100%;
+}
+
+.routing-fields input:focus {
+    outline: none;
+    background: white;
+}
+
+.routing-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 0 10px;
+}
+
+.swap-btn {
+    align-self: center;
+    padding: 10px;
+}
+
+.routing-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+.nav-btn.primary-btn {
+    background: #0ea5e9;
+    color: white;
+}
+
+.nav-btn.primary-btn:hover {
+    background: #0284c7;
+    transform: translateY(-2px);
+}
+
 /* ==========================================
    Info Panel (COMPACT VERSION)
 ========================================== */
