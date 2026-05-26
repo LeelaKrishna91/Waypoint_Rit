@@ -786,15 +786,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             searchBar.placeholder = "Search rooms, blocks, facilities...";
             showToast(`Found: ${title}`, "info");
 
-            // Show Routing Panel
-            const mainSearchBox = document.getElementById('main-search-box');
-            if (mainSearchBox) mainSearchBox.style.display = 'none';
-            
-            const routingPanel = document.getElementById('routing-panel');
-            if (routingPanel) routingPanel.style.display = 'flex';
-            
-            const routeToField = document.getElementById('route-to');
-            if (routeToField) routeToField.value = title;
+            // Show Confirmation Dialog instead of routing panel directly
+            const confirmDialog = document.getElementById('nav-confirm-dialog');
+            const targetNameSpan = document.getElementById('confirm-target-name');
+            if (confirmDialog && targetNameSpan) {
+                targetNameSpan.innerText = title;
+                confirmDialog.style.display = 'flex';
+            }
 
         } catch (e) {
             console.error("Search locating error: ", e);
@@ -905,6 +903,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (startNavBtn) {
         startNavBtn.addEventListener('click', () => {
             showToast("Navigation started! (Pathfinding API integration coming soon)", "info");
+        });
+    }
+
+    // Confirmation Dialog Button Listeners
+    const confirmYesBtn = document.getElementById('confirm-yes-btn');
+    const confirmNoBtn = document.getElementById('confirm-no-btn');
+    const navConfirmDialog = document.getElementById('nav-confirm-dialog');
+    const mainSearchBox = document.getElementById('main-search-box');
+    const routingPanel = document.getElementById('routing-panel');
+
+    if (confirmYesBtn) {
+        confirmYesBtn.addEventListener('click', () => {
+            if (navConfirmDialog) navConfirmDialog.style.display = 'none';
+            if (mainSearchBox) mainSearchBox.style.display = 'none';
+            if (routingPanel) {
+                routingPanel.style.display = 'flex';
+                const targetNameSpan = document.getElementById('confirm-target-name');
+                if (routeTo && targetNameSpan) {
+                    routeTo.value = targetNameSpan.innerText;
+                }
+            }
+        });
+    }
+
+    if (confirmNoBtn) {
+        confirmNoBtn.addEventListener('click', () => {
+            if (navConfirmDialog) navConfirmDialog.style.display = 'none';
         });
     }
 });

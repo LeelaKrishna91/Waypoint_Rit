@@ -139,6 +139,72 @@ body {
     color: #0ea5e9;
 }
 
+/* Navigation Confirmation Dialog */
+.nav-confirm-dialog {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.confirm-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+    text-align: center;
+}
+
+.confirm-text span {
+    color: #0ea5e9;
+}
+
+.confirm-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.confirm-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.confirm-btn.yes-btn {
+    background: #0ea5e9;
+    color: white;
+}
+
+.confirm-btn.yes-btn:hover {
+    background: #0284c7;
+}
+
+.confirm-btn.no-btn {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.confirm-btn.no-btn:hover {
+    background: #e2e8f0;
+}
+
 /* Routing Panel */
 .routing-panel {
     position: absolute;
