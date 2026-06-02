@@ -885,10 +885,153 @@ document.addEventListener("DOMContentLoaded", async () => {
     const routeFrom = document.getElementById('route-from');
     const routeTo = document.getElementById('route-to');
 
+    function drawRouteOnMap(coordinates) {
+        const routeSourceId = 'nav-route-source';
+        const routeLayerId = 'nav-route-layer';
+        const routeGlowLayerId = 'nav-route-glow-layer';
+
+        const geojson = {
+            'type': 'Feature',
+            'properties': {},
+            'geometry': {
+                'type': 'LineString',
+                'coordinates': coordinates
+            }
+        };
+
+        if (window.outdoorMap.getSource(routeSourceId)) {
+            window.outdoorMap.getSource(routeSourceId).setData(geojson);
+        } else {
+            window.outdoorMap.addSource(routeSourceId, {
+                'type': 'geojson',
+                'data': geojson
+            });
+
+            window.outdoorMap.addLayer({
+                'id': routeGlowLayerId,
+                'type': 'line',
+                'source': routeSourceId,
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#06b6d4',
+                    'line-width': 8,
+                    'line-opacity': 0.4
+                }
+            });
+
+            window.outdoorMap.addLayer({
+                'id': routeLayerId,
+                'type': 'line',
+                'source': routeSourceId,
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#22d3ee',
+                    'line-width': 4
+                }
+            });
+        }
+
+        const bounds = new mapboxgl.LngLatBounds();
+        coordinates.forEach(coord => bounds.extend(coord));
+        window.outdoorMap.fitBounds(bounds, {
+            padding: 50,
+            maxZoom: 19,
+            duration: 1500
+        });
+    }
+
+    function clearRouteFromMap() {
+        const routeSourceId = 'nav-route-source';
+        const routeLayerId = 'nav-route-layer';
+        const routeGlowLayerId = 'nav-route-glow-layer';
+
+        if (window.outdoorMap.getLayer(routeLayerId)) window.outdoorMap.removeLayer(routeLayerId);
+        if (window.outdoorMap.getLayer(routeGlowLayerId)) window.outdoorMap.removeLayer(routeGlowLayerId);
+        if (window.outdoorMap.getSource(routeSourceId)) window.outdoorMap.removeSource(routeSourceId);
+    }
+
+    async function calculateAndDisplayRoute() {
+        const fromVal = routeFrom.value.trim();
+        const toVal = routeTo.value.trim();
+
+        if (!fromVal || !toVal) {
+            showToast("Please enter both start and destination locations.", "warning");
+            return;
+        }
+
+        let startQuery = fromVal;
+        let endQuery = toVal;
+
+        if (fromVal.toLowerCase() === "my location") {
+            if (navigator.geolocation) {
+                showToast("Fetching your current location...", "info");
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const { latitude, longitude } = position.coords;
+                        startQuery = `${latitude},${longitude}`;
+                        await fetchAndDraw(startQuery, endQuery);
+                    },
+                    (error) => {
+                        console.error("GPS retrieval failed", error);
+                        showToast("Could not retrieve GPS location. Using default gate.", "warning");
+                        startQuery = "13.037528246529249,80.04520562488239";
+                        fetchAndDraw(startQuery, endQuery);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } else {
+                showToast("GPS is not supported. Using default gate.", "warning");
+                startQuery = "13.037528246529249,80.04520562488239";
+                await fetchAndDraw(startQuery, endQuery);
+            }
+        } else {
+            await fetchAndDraw(startQuery, endQuery);
+        }
+    }
+
+    async function fetchAndDraw(start, end) {
+        try {
+            const response = await fetch(`${API_URL}/route?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || "Route not found");
+            }
+
+            const routeData = await response.json();
+            if (routeData.path && routeData.path.length > 0) {
+                drawRouteOnMap(routeData.path);
+                showToast("Route loaded successfully!", "success");
+                
+                if (routeData.instructions && routeData.instructions.length > 0) {
+                    setTimeout(() => {
+                        showToast(routeData.instructions[0], "info");
+                    }, 1000);
+                    if (routeData.instructions.length > 1) {
+                        setTimeout(() => {
+                            showToast(routeData.instructions[routeData.instructions.length - 1], "info");
+                        }, 2500);
+                    }
+                }
+            } else {
+                showToast("Could not calculate a path. Locations might be disconnected.", "error");
+            }
+        } catch (e) {
+            console.error("Pathfinding error", e);
+            showToast(e.message || "Failed to fetch routing details.", "error");
+        }
+    }
+
     if (closeRouteBtn) {
         closeRouteBtn.addEventListener('click', () => {
             document.getElementById('routing-panel').style.display = 'none';
             document.getElementById('main-search-box').style.display = 'block';
+            clearRouteFromMap();
         });
     }
 
@@ -901,9 +1044,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (startNavBtn) {
-        startNavBtn.addEventListener('click', () => {
-            showToast("Navigation started! (Pathfinding API integration coming soon)", "info");
-        });
+        startNavBtn.addEventListener('click', calculateAndDisplayRoute);
     }
 
     // Confirmation Dialog Button Listeners

@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import mysql.connector
+import math
+import heapq
 
 import os
 
@@ -102,6 +104,184 @@ def search_location(query: str):
     conn.close()
     if not res: raise HTTPException(status_code=404, detail="Not found")
     return res
+
+# --- PATHFINDING & ROUTING ENGINE ---
+WALKWAY_NODES = {
+    "main_gate": (13.037528246529249, 80.04520562488239),
+    "junc_south": (13.0378, 80.0451),
+    "junc_center": (13.0386, 80.0450),
+    "junc_north": (13.0393, 80.0449),
+    "junc_ne": (13.0394, 80.0454),
+    "green_entrance": (13.0380, 80.0447),
+    "a_entrance": (13.0385, 80.0453),
+    "b_entrance": (13.0390, 80.0450),
+    "c_entrance": (13.0394, 80.0456),
+    "jobs_entrance": (13.0399, 80.0447)
+}
+
+WALKWAY_EDGES = {
+    "main_gate": ["junc_south"],
+    "junc_south": ["main_gate", "green_entrance", "a_entrance", "junc_center"],
+    "green_entrance": ["junc_south", "junc_center"],
+    "a_entrance": ["junc_south", "junc_center"],
+    "junc_center": ["green_entrance", "a_entrance", "b_entrance", "junc_north"],
+    "b_entrance": ["junc_center", "junc_north"],
+    "junc_north": ["b_entrance", "jobs_entrance", "junc_ne", "junc_center"],
+    "jobs_entrance": ["junc_north"],
+    "junc_ne": ["junc_north", "c_entrance"],
+    "c_entrance": ["junc_ne"]
+}
+
+BUILDING_TO_NODE = {
+    10: "a_entrance",
+    11: "green_entrance",
+    12: "b_entrance",
+    13: "jobs_entrance",
+    14: "c_entrance"
+}
+
+def get_distance(p1, p2):
+    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+def find_closest_node(lat, lng):
+    closest = None
+    min_dist = float('inf')
+    for node_id, coord in WALKWAY_NODES.items():
+        dist = get_distance((lat, lng), coord)
+        if dist < min_dist:
+            min_dist = dist
+            closest = node_id
+    return closest
+
+def dijkstra(start_node, end_node):
+    queue = [(0.0, start_node, [])]
+    visited = set()
+    while queue:
+        (cost, node, path) = heapq.heappop(queue)
+        if node in visited:
+            continue
+        visited.add(node)
+        
+        path = path + [node]
+        if node == end_node:
+            return cost, path
+            
+        for neighbor in WALKWAY_EDGES.get(node, []):
+            if neighbor not in visited:
+                dist = get_distance(WALKWAY_NODES[node], WALKWAY_NODES[neighbor])
+                heapq.heappush(queue, (cost + dist, neighbor, path))
+    return float('inf'), []
+
+def resolve_location(query: str):
+    if "," in query:
+        try:
+            parts = [float(p.strip()) for p in query.split(",")]
+            if len(parts) == 2:
+                return {
+                    "type": "coordinate",
+                    "lat": parts[0],
+                    "lng": parts[1],
+                    "floor": 0,
+                    "name": "My Location"
+                }
+        except:
+            pass
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # 1. Search Room exact
+    cursor.execute("SELECT r.room_id as id, r.coordinate_x as lat, r.coordinate_y as lng, 'room' as type, b.name as building_name, r.building_id, r.floor_level FROM Rooms r JOIN Buildings b ON r.building_id = b.building_id WHERE r.room_id = %s LIMIT 1", (query,))
+    res = cursor.fetchone()
+    
+    if not res:
+        # 2. Search Room LIKE
+        cursor.execute("SELECT r.room_id as id, r.coordinate_x as lat, r.coordinate_y as lng, 'room' as type, b.name as building_name, r.building_id, r.floor_level FROM Rooms r JOIN Buildings b ON r.building_id = b.building_id WHERE r.room_id LIKE %s LIMIT 1", (f"%{query}%",))
+        res = cursor.fetchone()
+        
+    if not res:
+        # 3. Search Building exact
+        cursor.execute("SELECT building_id as id, entrance_x as lat, entrance_y as lng, 'building' as type, name as building_name, building_id, 0 as floor_level FROM Buildings WHERE name = %s LIMIT 1", (query,))
+        res = cursor.fetchone()
+        
+    if not res:
+        # 4. Search Building LIKE
+        cursor.execute("SELECT building_id as id, entrance_x as lat, entrance_y as lng, 'building' as type, name as building_name, building_id, 0 as floor_level FROM Buildings WHERE name LIKE %s LIMIT 1", (f"%{query}%",))
+        res = cursor.fetchone()
+        
+    conn.close()
+    
+    if res:
+        return {
+            "type": res["type"],
+            "lat": res["lat"],
+            "lng": res["lng"],
+            "floor": res["floor_level"],
+            "building_id": res.get("building_id"),
+            "name": res["id"] if res["type"] == "room" else res["building_name"]
+        }
+    return None
+
+@app.get("/route")
+def get_route(start: str, end: str):
+    start_loc = resolve_location(start)
+    end_loc = resolve_location(end)
+    
+    if not start_loc or not end_loc:
+        raise HTTPException(status_code=404, detail="Start or destination location not found.")
+        
+    start_node = None
+    if start_loc.get("building_id") in BUILDING_TO_NODE:
+        start_node = BUILDING_TO_NODE[start_loc["building_id"]]
+    else:
+        start_node = find_closest_node(start_loc["lat"], start_loc["lng"])
+        
+    end_node = None
+    if end_loc.get("building_id") in BUILDING_TO_NODE:
+        end_node = BUILDING_TO_NODE[end_loc["building_id"]]
+    else:
+        end_node = find_closest_node(end_loc["lat"], end_loc["lng"])
+        
+    cost, walkway_path_nodes = dijkstra(start_node, end_node)
+    
+    path_coords = []
+    
+    # Prepend starting room / custom location coordinates if it is a room or coordinate
+    if start_loc["type"] == "room" or start_loc["type"] == "coordinate":
+        path_coords.append([start_loc["lng"], start_loc["lat"]])
+        
+    for node in walkway_path_nodes:
+        lat, lng = WALKWAY_NODES[node]
+        path_coords.append([lng, lat])
+        
+    if end_loc["type"] == "room" or end_loc["type"] == "coordinate":
+        path_coords.append([end_loc["lng"], end_loc["lat"]])
+        
+    filtered_coords = []
+    for coord in path_coords:
+        if not filtered_coords or filtered_coords[-1] != coord:
+            filtered_coords.append(coord)
+            
+    instructions = []
+    if start_loc["type"] == "room" and start_loc["floor"] > 0:
+        instructions.append(f"Exit room {start_loc['name']} on Floor {start_loc['floor']} and use the elevator/stairs to get to the ground level.")
+    
+    instructions.append(f"Exit {start_loc['name']} and follow the walkway path.")
+    
+    instructions.append("Follow the pathway towards the destination building.")
+    
+    if end_loc["type"] == "room" and end_loc["floor"] > 0:
+        instructions.append(f"Enter the destination building and use the elevator/stairs to reach room {end_loc['name']} on Floor {end_loc['floor']}.")
+    else:
+        instructions.append(f"Arrive at {end_loc['name']}.")
+        
+    return {
+        "start": start_loc,
+        "end": end_loc,
+        "path": filtered_coords,
+        "instructions": instructions,
+        "distance_deg": cost
+    }
 
 # --- POST ENDPOINTS (Admin Saves) ---
 @app.post("/admin/building")
