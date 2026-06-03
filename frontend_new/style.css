@@ -1125,3 +1125,63 @@ input:checked+.slider:before {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--accent-blue);
 }
+
+/* Premium MazeMap-style Indoor Room Labels */
+.room-map-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 20px;
+    color: #f8fafc;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    pointer-events: auto;
+}
+
+.room-map-label:hover {
+    transform: scale(1.1) translateY(-2px);
+    background: #0ea5e9;
+    border-color: #38bdf8;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+
+.room-map-label i {
+    font-size: 0.8rem;
+}
+
+/* Color-code types in CSS to match map shapes */
+.room-map-label.classroom {
+    border-color: rgba(249, 115, 22, 0.5);
+}
+.room-map-label.classroom i {
+    color: #f97316;
+}
+
+.room-map-label.meeting {
+    border-color: rgba(34, 197, 94, 0.5);
+}
+.room-map-label.meeting i {
+    color: #22c55e;
+}
+
+.room-map-label.office {
+    border-color: rgba(59, 130, 246, 0.5);
+}
+.room-map-label.office i {
+    color: #3b82f6;
+}
+
+.room-map-label.facility, .room-map-label.restroom {
+    border-color: rgba(100, 116, 139, 0.5);
+}
+.room-map-label.facility i, .room-map-label.restroom i {
+    color: #94a3b8;
+}

@@ -84,7 +84,7 @@ def get_buildings():
 @app.get("/admin/rooms")
 def get_rooms():
     conn = get_db_connection(); cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT r.room_id, r.building_id, r.floor_level, r.room_type, r.footprint_coordinates, r.z_coordinate, b.name as building_name FROM Rooms r JOIN Buildings b ON r.building_id = b.building_id")
+    cursor.execute("SELECT r.room_id, r.building_id, r.floor_level, r.room_type, r.coordinate_x, r.coordinate_y, r.footprint_coordinates, r.z_coordinate, b.name as building_name FROM Rooms r JOIN Buildings b ON r.building_id = b.building_id")
     res = cursor.fetchall(); conn.close(); return res
 
 @app.get("/live-data")

@@ -41,6 +41,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         Object.values(sheets).forEach(sheet => {
             if (sheet) sheet.classList.remove('open');
         });
+
+        if (window.outdoorMap) {
+            window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
+            window.outdoorMap.setFilter('indoor-rooms', ['==', 'level', -1]);
+        }
+        roomMarkersList.forEach(m => m.remove());
+        roomMarkersList = [];
+        activeBuildingId = null;
     }
 
     function openSheet(sheetKey) {
@@ -141,6 +149,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let activeBuildingId = null;
     let is3D = true;
     let markersList = [];
+    let roomMarkersList = []; // Track indoor room label markers
     let buildingsData = [];
 
     // ==========================================
@@ -352,7 +361,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             'source': 'custom-campus',
             'filter': ['all', ['==', ['get', 'type'], 'room'], ['==', ['get', 'level'], -1]],
             'paint': {
-                'fill-extrusion-color': currentTheme === 'dark' ? '#0f172a' : '#e0e7ff',
+                'fill-extrusion-color': [
+                    'match',
+                    ['get', 'room_type'],
+                    'Classroom', '#f97316',
+                    'Meeting', '#22c55e',
+                    'Office', '#3b82f6',
+                    'Facility', '#64748b',
+                    'Restroom', '#64748b',
+                    currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
+                ],
                 'fill-extrusion-base': ['get', 'base_h'],
                 'fill-extrusion-height': ['get', 'ceil_h'],
                 'fill-extrusion-opacity': 1.0
@@ -442,7 +460,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     'parent': r.building_id,
                                     'level': r.floor_level,
                                     'base_h': base_h,
-                                    'ceil_h': ceil_h
+                                    'ceil_h': ceil_h,
+                                    'room_type': r.room_type
                                 },
                                 'geometry': { 'type': 'Polygon', 'coordinates': coords }
                             });
@@ -475,6 +494,52 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.outdoorMap.on('mouseenter', 'building-shells', () => window.outdoorMap.getCanvas().style.cursor = 'pointer');
     window.outdoorMap.on('mouseleave', 'building-shells', () => window.outdoorMap.getCanvas().style.cursor = '');
 
+    async function renderRoomLabels(buildingId, floorLevel) {
+        roomMarkersList.forEach(m => m.remove());
+        roomMarkersList = [];
+
+        try {
+            const rRes = await fetch(`${API_URL}/admin/rooms`);
+            if (rRes.ok) {
+                const rooms = await rRes.json();
+                const filteredRooms = rooms.filter(r => r.building_id === buildingId && r.floor_level === floorLevel);
+
+                filteredRooms.forEach(r => {
+                    if (r.coordinate_x && r.coordinate_y) {
+                        const el = document.createElement('div');
+                        el.className = `room-map-label ${r.room_type ? r.room_type.toLowerCase() : 'general'}`;
+                        
+                        let icon = 'fa-door-open';
+                        if (r.room_type === 'Classroom') icon = 'fa-chalkboard-user';
+                        else if (r.room_type === 'Meeting') icon = 'fa-users';
+                        else if (r.room_type === 'Office') icon = 'fa-briefcase';
+                        else if (r.room_type === 'Facility') icon = 'fa-gears';
+                        else if (r.room_id.toLowerCase().includes('restroom')) icon = 'fa-restroom';
+
+                        el.innerHTML = `<i class="fa-solid ${icon}"></i><span>${r.room_id}</span>`;
+                        
+                        el.onclick = (ev) => {
+                            ev.stopPropagation();
+                            locateLocation(r.room_id);
+                        };
+
+                        const m = new mapboxgl.Marker({
+                            element: el,
+                            pitchAlignment: 'map',
+                            rotationAlignment: 'map'
+                        })
+                        .setLngLat([r.coordinate_y, r.coordinate_x])
+                        .addTo(window.outdoorMap);
+
+                        roomMarkersList.push(m);
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Failed to render room labels", e);
+        }
+    }
+
     function selectBuilding(b) {
         activeBuildingId = b.building_id;
         
@@ -484,6 +549,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             pitch: 62,
             duration: 1500
         });
+
+        // Hide active building shell to see inside (X-ray mode)
+        window.outdoorMap.setFilter('building-shells', [
+            'all',
+            ['==', ['get', 'type'], 'building'],
+            ['!=', ['get', 'id'], activeBuildingId]
+        ]);
 
         // Set Details in Bottom Sheet
         document.getElementById('sheet-building-title').innerText = b.name;
@@ -513,6 +585,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 // Filter dynamic room list on the bottom sheet
                 fetchRoomsForBuildingAndLevel(b.building_id, i);
+
+                // Render detail room labels
+                renderRoomLabels(activeBuildingId, i);
             };
 
             floorContainer.appendChild(btn);
@@ -739,7 +814,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-color', [
                     'case',
                     ['==', ['get', 'id'], data.id], '#fbbf24',
-                    currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
+                    [
+                        'match',
+                        ['get', 'room_type'],
+                        'Classroom', '#f97316',
+                        'Meeting', '#22c55e',
+                        'Office', '#3b82f6',
+                        'Facility', '#64748b',
+                        'Restroom', '#64748b',
+                        currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
+                    ]
                 ]);
             }
 
