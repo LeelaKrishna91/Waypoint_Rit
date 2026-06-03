@@ -605,7 +605,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
     window.outdoorMap.on('click', 'building-shells', (e) => {
         const building = e.features[0].properties;
-        activeBuildingId = building.id;
+        activeBuildingId = parseInt(building.id);
 
         window.outdoorMap.flyTo({ center: e.lngLat, zoom: 19.5, pitch: 60, duration: 1500 });
 
@@ -901,7 +901,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Automatically open building and select the correct floor
             if (locationData.building_id) {
-                activeBuildingId = locationData.building_id;
+                activeBuildingId = parseInt(locationData.building_id);
                 document.getElementById('floor-widget-container').style.display = 'flex';
                 document.getElementById('exit-building-btn').style.display = 'block';
                 document.getElementById('info-title').innerText = locationData.building_name;

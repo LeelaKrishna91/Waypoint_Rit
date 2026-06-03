@@ -690,7 +690,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
     window.outdoorMap.on('click', 'building-shells', (e) => {
         const props = e.features[0].properties;
-        const b = buildingsData.find(item => item.building_id === props.id);
+        const b = buildingsData.find(item => item.building_id === parseInt(props.id));
         if (b) {
             selectBuilding(b);
         }
@@ -746,7 +746,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     function selectBuilding(b) {
-        activeBuildingId = b.building_id;
+        activeBuildingId = parseInt(b.building_id);
         
         window.outdoorMap.flyTo({
             center: [b.entrance_y, b.entrance_x],
@@ -1070,7 +1070,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Automatically select building & floor if a room was searched
             if (data.building_id) {
-                const b = buildingsData.find(item => item.building_id === data.building_id);
+                const b = buildingsData.find(item => item.building_id === parseInt(data.building_id));
                 if (b) {
                     selectBuilding(b);
                     if (data.type === 'room' && data.floor_level !== undefined) {
