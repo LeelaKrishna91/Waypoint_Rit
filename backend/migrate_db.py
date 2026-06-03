@@ -62,10 +62,18 @@ try:
         coordinate_y FLOAT NOT NULL,
         floor_plan_image VARCHAR(255) NOT NULL DEFAULT 'campus_map.png',
         footprint_coordinates TEXT,
+        color VARCHAR(50) DEFAULT NULL,
         z_coordinate FLOAT DEFAULT 3.5,
         FOREIGN KEY (building_id) REFERENCES Buildings(building_id) ON DELETE CASCADE
     )
     """)
+    try:
+        cursor.execute("ALTER TABLE Rooms ADD COLUMN color VARCHAR(50) DEFAULT NULL")
+        print("Successfully added color column to Rooms table.")
+    except mysql.connector.Error as err:
+        if err.errno != mysql.connector.errorcode.ER_DUP_FIELDNAME:
+            raise err
+    conn.commit()
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS SystemStatus (
@@ -104,14 +112,14 @@ try:
             rooms = json.load(f)
         for r in rooms:
             cursor.execute("""
-            INSERT INTO Rooms (room_id, building_id, floor_level, room_type, branch, class_in_charge, coordinate_x, coordinate_y, floor_plan_image, footprint_coordinates, z_coordinate)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE 
-                building_id=VALUES(building_id), floor_level=VALUES(floor_level), room_type=VALUES(room_type),
-                branch=VALUES(branch), class_in_charge=VALUES(class_in_charge), coordinate_x=VALUES(coordinate_x),
-                coordinate_y=VALUES(coordinate_y), floor_plan_image=VALUES(floor_plan_image),
-                footprint_coordinates=VALUES(footprint_coordinates), z_coordinate=VALUES(z_coordinate)
-            """, (r.get("room_id"), r.get("building_id"), r.get("floor_level"), r.get("room_type"), r.get("branch"), r.get("class_in_charge"), r.get("coordinate_x"), r.get("coordinate_y"), r.get("floor_plan_image"), r.get("footprint_coordinates"), r.get("z_coordinate")))
+             INSERT INTO Rooms (room_id, building_id, floor_level, room_type, branch, class_in_charge, coordinate_x, coordinate_y, floor_plan_image, footprint_coordinates, z_coordinate, color)
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             ON DUPLICATE KEY UPDATE 
+                 building_id=VALUES(building_id), floor_level=VALUES(floor_level), room_type=VALUES(room_type),
+                 branch=VALUES(branch), class_in_charge=VALUES(class_in_charge), coordinate_x=VALUES(coordinate_x),
+                 coordinate_y=VALUES(coordinate_y), floor_plan_image=VALUES(floor_plan_image),
+                 footprint_coordinates=VALUES(footprint_coordinates), z_coordinate=VALUES(z_coordinate), color=VALUES(color)
+             """, (r.get("room_id"), r.get("building_id"), r.get("floor_level"), r.get("room_type"), r.get("branch"), r.get("class_in_charge"), r.get("coordinate_x"), r.get("coordinate_y"), r.get("floor_plan_image"), r.get("footprint_coordinates"), r.get("z_coordinate"), r.get("color")))
         conn.commit()
         print(f"Seeded {len(rooms)} rooms.")
 

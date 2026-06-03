@@ -264,14 +264,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             'filter': ['all', ['==', ['get', 'type'], 'room'], ['==', ['get', 'level'], -1]],
             'paint': {
                 'fill-extrusion-color': [
-                    'match',
-                    ['get', 'room_type'],
-                    'Classroom', '#f97316',
-                    'Meeting', '#22c55e',
-                    'Office', '#3b82f6',
-                    'Facility', '#64748b',
-                    'Restroom', '#64748b',
-                    currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
+                    'coalesce',
+                    ['get', 'color'],
+                    [
+                        'match',
+                        ['get', 'room_type'],
+                        'Classroom', '#f97316',
+                        'Meeting', '#22c55e',
+                        'Office', '#3b82f6',
+                        'Facility', '#64748b',
+                        'Restroom', '#64748b',
+                        currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
+                    ]
                 ],
                 'fill-extrusion-base': ['get', 'base_h'],
                 'fill-extrusion-height': ['+', ['get', 'base_h'], 0.1],
@@ -395,22 +399,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 'coordinates': makeRect(x, y, 1.2, 0.6)
                             }
                         });
-                        const cy_chair = y - 0.55 * 9.0e-6;
-                        furnitureFeatures.push({
-                            'type': 'Feature',
-                            'properties': {
-                                'type': 'furniture',
-                                'sub_type': 'chair',
-                                'parent': r.building_id,
-                                'level': r.floor_level,
-                                'base_h': base_h,
-                                'ceil_h': base_h + 0.5
-                            },
-                            'geometry': {
-                                'type': 'Polygon',
-                                'coordinates': makeRect(x, cy_chair, 0.4, 0.4)
-                            }
-                        });
                     }
                 }
             }
@@ -430,19 +418,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                     'coordinates': makeRect(cx, cy, 3.2, 1.2)
                 }
             });
-
-            for (let dx = -1.2; dx <= 1.2; dx += 0.8) {
-                furnitureFeatures.push({
-                    'type': 'Feature',
-                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
-                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(cx + dx * 9.2e-6, cy + 0.85 * 9.0e-6, 0.4, 0.4) }
-                });
-                furnitureFeatures.push({
-                    'type': 'Feature',
-                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
-                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(cx + dx * 9.2e-6, cy - 0.85 * 9.0e-6, 0.4, 0.4) }
-                });
-            }
         } else if (r.room_type === 'Office') {
             const width = (maxX - minX) / 9.2e-6;
             const height = (maxY - minY) / 9e-6;
@@ -458,32 +433,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                     'properties': { 'type': 'furniture', 'sub_type': 'table', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.75 },
                     'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk1_x, desk1_y, 1.4, 0.7) }
                 });
-                furnitureFeatures.push({
-                    'type': 'Feature',
-                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
-                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk1_x, desk1_y - 0.6 * 9.0e-6, 0.4, 0.4) }
-                });
 
                 furnitureFeatures.push({
                     'type': 'Feature',
                     'properties': { 'type': 'furniture', 'sub_type': 'table', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.75 },
                     'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk2_x, desk2_y, 1.4, 0.7) }
                 });
-                furnitureFeatures.push({
-                    'type': 'Feature',
-                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
-                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk2_x, desk2_y + 0.6 * 9.0e-6, 0.4, 0.4) }
-                });
             } else {
                 furnitureFeatures.push({
                     'type': 'Feature',
                     'properties': { 'type': 'furniture', 'sub_type': 'table', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.75 },
                     'geometry': { 'type': 'Polygon', 'coordinates': makeRect(cx, cy, 1.4, 0.7) }
-                });
-                furnitureFeatures.push({
-                    'type': 'Feature',
-                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
-                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(cx, cy - 0.6 * 9.0e-6, 0.4, 0.4) }
                 });
             }
         }
@@ -580,7 +540,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     'level': r.floor_level,
                                     'base_h': base_h,
                                     'ceil_h': ceil_h,
-                                    'room_type': r.room_type
+                                    'room_type': r.room_type,
+                                    'color': r.color || null
                                 },
                                 'geometry': { 'type': 'Polygon', 'coordinates': coords }
                             });
@@ -809,8 +770,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById('exit-building-btn').addEventListener('click', () => {
         window.outdoorMap.flyTo({ center: ritCenter, zoom: 17.5, pitch: 60, duration: 1500 });
-        window.outdoorMap.setFilter('indoor-rooms', ['==', 'level', -1]);
-        window.outdoorMap.setFilter('indoor-furniture', ['==', 'level', -1]);
+        window.outdoorMap.setFilter('indoor-rooms', ['==', ['get', 'level'], -1]);
+        window.outdoorMap.setFilter('indoor-furniture', ['==', ['get', 'level'], -1]);
         window.outdoorMap.setFilter('indoor-floor-plate', ['==', ['get', 'id'], -1]);
         window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
 
@@ -859,14 +820,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                 'case',
                 ['==', ['get', 'id'], activeSearchRoomId], '#fbbf24',
                 [
-                    'match',
-                    ['get', 'room_type'],
-                    'Classroom', '#f97316',
-                    'Meeting', '#22c55e',
-                    'Office', '#3b82f6',
-                    'Facility', '#64748b',
-                    'Restroom', '#64748b',
-                    currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
+                    'coalesce',
+                    ['get', 'color'],
+                    [
+                        'match',
+                        ['get', 'room_type'],
+                        'Classroom', '#f97316',
+                        'Meeting', '#22c55e',
+                        'Office', '#3b82f6',
+                        'Facility', '#64748b',
+                        'Restroom', '#64748b',
+                        currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
+                    ]
                 ]
             ]);
 

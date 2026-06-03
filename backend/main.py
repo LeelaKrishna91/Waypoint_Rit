@@ -38,7 +38,7 @@ def get_db_connection():
 class BuildingModel(BaseModel):
     name: str; total_floors: int; entrance_x: float; entrance_y: float; icon: str; color: str; footprint_coordinates: str
 class RoomModel(BaseModel):
-    room_id: str; building_id: int; floor_level: int; room_type: str; coordinate_x: float; coordinate_y: float; footprint_coordinates: str; branch: Optional[str] = "General"; z_coordinate: float = 3.5
+    room_id: str; building_id: int; floor_level: int; room_type: str; coordinate_x: float; coordinate_y: float; footprint_coordinates: str; branch: Optional[str] = "General"; z_coordinate: float = 3.5; color: Optional[str] = None
 class MessageModel(BaseModel):
     message: str; type: str
 
@@ -84,7 +84,7 @@ def get_buildings():
 @app.get("/admin/rooms")
 def get_rooms():
     conn = get_db_connection(); cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT r.room_id, r.building_id, r.floor_level, r.room_type, r.coordinate_x, r.coordinate_y, r.footprint_coordinates, r.z_coordinate, b.name as building_name FROM Rooms r JOIN Buildings b ON r.building_id = b.building_id")
+    cursor.execute("SELECT r.room_id, r.building_id, r.floor_level, r.room_type, r.coordinate_x, r.coordinate_y, r.footprint_coordinates, r.z_coordinate, r.color, b.name as building_name FROM Rooms r JOIN Buildings b ON r.building_id = b.building_id")
     res = cursor.fetchall(); conn.close(); return res
 
 @app.get("/live-data")
@@ -293,7 +293,7 @@ def add_building(b: BuildingModel):
 @app.post("/admin/room")
 def add_room(r: RoomModel):
     conn = get_db_connection(); cursor = conn.cursor()
-    cursor.execute("INSERT INTO Rooms (room_id, building_id, floor_level, room_type, branch, coordinate_x, coordinate_y, footprint_coordinates, z_coordinate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (r.room_id, r.building_id, r.floor_level, r.room_type, r.branch, r.coordinate_x, r.coordinate_y, r.footprint_coordinates, r.z_coordinate))
+    cursor.execute("INSERT INTO Rooms (room_id, building_id, floor_level, room_type, branch, coordinate_x, coordinate_y, footprint_coordinates, z_coordinate, color) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE building_id=VALUES(building_id), floor_level=VALUES(floor_level), room_type=VALUES(room_type), branch=VALUES(branch), coordinate_x=VALUES(coordinate_x), coordinate_y=VALUES(coordinate_y), footprint_coordinates=VALUES(footprint_coordinates), z_coordinate=VALUES(z_coordinate), color=VALUES(color)", (r.room_id, r.building_id, r.floor_level, r.room_type, r.branch, r.coordinate_x, r.coordinate_y, r.footprint_coordinates, r.z_coordinate, r.color))
     conn.commit(); conn.close(); return {"msg": "Saved"}
 
 @app.post("/admin/status")

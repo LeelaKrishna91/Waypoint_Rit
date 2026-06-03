@@ -135,6 +135,7 @@
             <div class="form-row">
                 <div class="form-group"><label>Floor Level (0 = Ground)</label><input type="number" id="r-floor" value="0"></div>
                 <div class="form-group"><label>Type</label><select id="r-type"><option>Classroom</option><option>Corridor</option><option>Facility</option></select></div>
+                <div class="form-group"><label>Room Color (Hex)</label><input type="text" id="r-color" placeholder="#f97316 (blank for default)"></div>
             </div>
             <div class="form-row">
                 <div class="form-group"><label>Center Latitude (X)</label><input type="number" step="any" id="r-lat" placeholder="13.03..."></div>
@@ -268,7 +269,8 @@
                 coordinate_x: parseFloat(document.getElementById('r-lat').value) || 0, 
                 coordinate_y: parseFloat(document.getElementById('r-lng').value) || 0,
                 footprint_coordinates: document.getElementById('r-footprint').value.trim(), // <-- NEW
-                z_coordinate: parseFloat(document.getElementById('r-zcoord').value) || 3.5
+                z_coordinate: parseFloat(document.getElementById('r-zcoord').value) || 3.5,
+                color: document.getElementById('r-color').value.trim() || null
             };
             if(!payload.room_id || !payload.footprint_coordinates) return alert("Room ID and Coordinates are required.");
             
