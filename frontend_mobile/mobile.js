@@ -46,6 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
             window.outdoorMap.setFilter('indoor-rooms', ['==', 'level', -1]);
             window.outdoorMap.setFilter('indoor-furniture', ['==', 'level', -1]);
+            window.outdoorMap.setFilter('indoor-floor-plate', ['==', ['get', 'id'], -1]);
         }
         roomMarkersList.forEach(m => m.remove());
         roomMarkersList = [];
@@ -352,6 +353,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                     17.5, 0.95,
                     19.5, 0.05
                 ]
+            }
+        });
+
+        // LAYER 1.5: Indoor Floor Plate (to support indoor rooms/furniture)
+        window.outdoorMap.addLayer({
+            'id': 'indoor-floor-plate',
+            'type': 'fill-extrusion',
+            'source': 'custom-campus',
+            'filter': ['all', ['==', ['get', 'type'], 'building'], ['==', ['get', 'id'], -1]],
+            'paint': {
+                'fill-extrusion-color': currentTheme === 'dark' ? '#1e293b' : '#f1f5f9',
+                'fill-extrusion-base': 0,
+                'fill-extrusion-height': 0.1,
+                'fill-extrusion-opacity': 0.95
             }
         });
 
@@ -779,6 +794,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ['==', ['get', 'level'], i],
                     ['==', ['get', 'parent'], activeBuildingId]
                 ]);
+
+                window.outdoorMap.setFilter('indoor-floor-plate', [
+                    'all',
+                    ['==', ['get', 'type'], 'building'],
+                    ['==', ['get', 'id'], activeBuildingId]
+                ]);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', i * 4);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', i * 4 + 0.05);
 
                 // Filter dynamic room list on the bottom sheet
                 fetchRoomsForBuildingAndLevel(b.building_id, i);

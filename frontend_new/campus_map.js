@@ -242,6 +242,20 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
+        // LAYER 1.5: Indoor Floor Plate (to support indoor rooms/furniture)
+        window.outdoorMap.addLayer({
+            'id': 'indoor-floor-plate',
+            'type': 'fill-extrusion',
+            'source': 'custom-campus',
+            'filter': ['all', ['==', ['get', 'type'], 'building'], ['==', ['get', 'id'], -1]],
+            'paint': {
+                'fill-extrusion-color': currentTheme === 'dark' ? '#1e293b' : '#f1f5f9',
+                'fill-extrusion-base': 0,
+                'fill-extrusion-height': 0.1,
+                'fill-extrusion-opacity': 0.95
+            }
+        });
+
         // LAYER 2: Interior Rooms (Hidden by default)
         window.outdoorMap.addLayer({
             'id': 'indoor-rooms',
@@ -530,6 +544,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                             if (rawCoords.endsWith(',')) {
                                 rawCoords = rawCoords.slice(0, -1);
                             }
+                            if (!rawCoords.startsWith('[[')) {
+                                if (rawCoords.startsWith('[')) {
+                                    rawCoords = '[' + rawCoords + ']';
+                                } else {
+                                    rawCoords = '[[' + rawCoords + ']]';
+                                }
+                            }
                             let coords = JSON.parse(rawCoords);
                             if (coords.length > 0 && typeof coords[0][0] === 'number') {
                                 coords = [coords];
@@ -685,6 +706,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ['==', ['get', 'parent'], activeBuildingId]
                 ]);
 
+                window.outdoorMap.setFilter('indoor-floor-plate', [
+                    'all',
+                    ['==', ['get', 'type'], 'building'],
+                    ['==', ['get', 'id'], activeBuildingId]
+                ]);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', i * 4);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', i * 4 + 0.05);
+
                 // Render detail room labels
                 renderRoomLabels(activeBuildingId, i);
             };
@@ -782,6 +811,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.outdoorMap.flyTo({ center: ritCenter, zoom: 17.5, pitch: 60, duration: 1500 });
         window.outdoorMap.setFilter('indoor-rooms', ['==', 'level', -1]);
         window.outdoorMap.setFilter('indoor-furniture', ['==', 'level', -1]);
+        window.outdoorMap.setFilter('indoor-floor-plate', ['==', ['get', 'id'], -1]);
         window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
 
         // Clear room labels
