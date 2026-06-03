@@ -45,6 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (window.outdoorMap) {
             window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
             window.outdoorMap.setFilter('indoor-rooms', ['==', 'level', -1]);
+            window.outdoorMap.setFilter('indoor-furniture', ['==', 'level', -1]);
         }
         roomMarkersList.forEach(m => m.remove());
         roomMarkersList = [];
@@ -354,7 +355,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
-        // Rooms Layer
         window.outdoorMap.addLayer({
             'id': 'indoor-rooms',
             'type': 'fill-extrusion',
@@ -377,6 +377,26 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
+        // LAYER 3: Indoor Furniture (Hidden by default)
+        window.outdoorMap.addLayer({
+            'id': 'indoor-furniture',
+            'type': 'fill-extrusion',
+            'source': 'custom-campus',
+            'filter': ['all', ['==', ['get', 'type'], 'furniture'], ['==', ['get', 'level'], -1]],
+            'paint': {
+                'fill-extrusion-color': [
+                    'match',
+                    ['get', 'sub_type'],
+                    'table', '#b45309', // wood brown
+                    'chair', '#475569', // slate grey
+                    '#64748b' // default
+                ],
+                'fill-extrusion-base': ['get', 'base_h'],
+                'fill-extrusion-height': ['get', 'ceil_h'],
+                'fill-extrusion-opacity': 0.95
+            }
+        });
+
         await refreshCampusData();
 
         const splash = document.getElementById('splash-screen');
@@ -386,6 +406,160 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.outdoorMap.on('style.load', renderCustomLayers);
 
     // Dynamic Database Fetching
+    function makeRect(cx, cy, w, h) {
+        const dx = (w / 2) * 9.2e-6;
+        const dy = (h / 2) * 9.0e-6;
+        return [
+            [
+                [cx - dx, cy - dy],
+                [cx + dx, cy - dy],
+                [cx + dx, cy + dy],
+                [cx - dx, cy + dy],
+                [cx - dx, cy - dy]
+            ]
+        ];
+    }
+
+    function generateFurnitureForRoom(r, coords, base_h) {
+        const furnitureFeatures = [];
+        if (!coords || coords.length === 0) return furnitureFeatures;
+
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        let sumX = 0, sumY = 0, count = 0;
+
+        coords[0].forEach(pt => {
+            minX = Math.min(minX, pt[0]);
+            maxX = Math.max(maxX, pt[0]);
+            minY = Math.min(minY, pt[1]);
+            maxY = Math.max(maxY, pt[1]);
+            sumX += pt[0];
+            sumY += pt[1];
+            count++;
+        });
+
+        const cx = sumX / count;
+        const cy = sumY / count;
+        const roomPoly = turf.polygon(coords);
+
+        if (r.room_type === 'Classroom') {
+            const stepX = 2.4 * 9.2e-6;
+            const stepY = 2.4 * 9.0e-6;
+
+            for (let x = minX + stepX / 2; x < maxX; x += stepX) {
+                for (let y = minY + stepY / 2; y < maxY; y += stepY) {
+                    const pt = turf.point([x, y]);
+                    if (turf.booleanPointInPolygon(pt, roomPoly)) {
+                        furnitureFeatures.push({
+                            'type': 'Feature',
+                            'properties': {
+                                'type': 'furniture',
+                                'sub_type': 'table',
+                                'parent': r.building_id,
+                                'level': r.floor_level,
+                                'base_h': base_h,
+                                'ceil_h': base_h + 0.75
+                            },
+                            'geometry': {
+                                'type': 'Polygon',
+                                'coordinates': makeRect(x, y, 1.2, 0.6)
+                            }
+                        });
+                        const cy_chair = y - 0.55 * 9.0e-6;
+                        furnitureFeatures.push({
+                            'type': 'Feature',
+                            'properties': {
+                                'type': 'furniture',
+                                'sub_type': 'chair',
+                                'parent': r.building_id,
+                                'level': r.floor_level,
+                                'base_h': base_h,
+                                'ceil_h': base_h + 0.5
+                            },
+                            'geometry': {
+                                'type': 'Polygon',
+                                'coordinates': makeRect(x, cy_chair, 0.4, 0.4)
+                            }
+                        });
+                    }
+                }
+            }
+        } else if (r.room_type === 'Meeting') {
+            furnitureFeatures.push({
+                'type': 'Feature',
+                'properties': {
+                    'type': 'furniture',
+                    'sub_type': 'table',
+                    'parent': r.building_id,
+                    'level': r.floor_level,
+                    'base_h': base_h,
+                    'ceil_h': base_h + 0.75
+                },
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': makeRect(cx, cy, 3.2, 1.2)
+                }
+            });
+
+            for (let dx = -1.2; dx <= 1.2; dx += 0.8) {
+                furnitureFeatures.push({
+                    'type': 'Feature',
+                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
+                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(cx + dx * 9.2e-6, cy + 0.85 * 9.0e-6, 0.4, 0.4) }
+                });
+                furnitureFeatures.push({
+                    'type': 'Feature',
+                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
+                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(cx + dx * 9.2e-6, cy - 0.85 * 9.0e-6, 0.4, 0.4) }
+                });
+            }
+        } else if (r.room_type === 'Office') {
+            const width = (maxX - minX) / 9.2e-6;
+            const height = (maxY - minY) / 9e-6;
+
+            if (width > 6 && height > 6) {
+                const desk1_x = cx - 1.5 * 9.2e-6;
+                const desk1_y = cy + 1.0 * 9.0e-6;
+                const desk2_x = cx + 1.5 * 9.2e-6;
+                const desk2_y = cy - 1.0 * 9.0e-6;
+
+                furnitureFeatures.push({
+                    'type': 'Feature',
+                    'properties': { 'type': 'furniture', 'sub_type': 'table', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.75 },
+                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk1_x, desk1_y, 1.4, 0.7) }
+                });
+                furnitureFeatures.push({
+                    'type': 'Feature',
+                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
+                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk1_x, desk1_y - 0.6 * 9.0e-6, 0.4, 0.4) }
+                });
+
+                furnitureFeatures.push({
+                    'type': 'Feature',
+                    'properties': { 'type': 'furniture', 'sub_type': 'table', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.75 },
+                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk2_x, desk2_y, 1.4, 0.7) }
+                });
+                furnitureFeatures.push({
+                    'type': 'Feature',
+                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
+                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk2_x, desk2_y + 0.6 * 9.0e-6, 0.4, 0.4) }
+                });
+            } else {
+                furnitureFeatures.push({
+                    'type': 'Feature',
+                    'properties': { 'type': 'furniture', 'sub_type': 'table', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.75 },
+                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(cx, cy, 1.4, 0.7) }
+                });
+                furnitureFeatures.push({
+                    'type': 'Feature',
+                    'properties': { 'type': 'furniture', 'sub_type': 'chair', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.5 },
+                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(cx, cy - 0.6 * 9.0e-6, 0.4, 0.4) }
+                });
+            }
+        }
+        return furnitureFeatures;
+    }
+
     async function refreshCampusData() {
         try {
             const bRes = await fetch(`${API_URL}/admin/buildings`);
@@ -410,7 +584,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                         'geometry': { 'type': 'Polygon', 'coordinates': coords }
                     });
 
-                    // Add Custom POI Markers floating with transparent backgrounds
                     if (b.entrance_x && b.entrance_y) {
                         const el = document.createElement('div');
                         el.className = 'poi-marker';
@@ -418,7 +591,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                         const bColor = b.color || '#38bdf8';
                         el.innerHTML = `<i class="fa-solid ${b.icon || 'fa-building'}" style="background: transparent; color: ${bColor}; border-color: ${bColor}; box-shadow: 0 0 10px ${bColor}40; --building-color: ${bColor};"></i><br><span>${b.name}</span>`;
 
-                        // Add click listener directly to the HTML icon on mobile
                         el.addEventListener('click', (ev) => {
                             ev.stopPropagation();
                             selectBuilding(b);
@@ -434,7 +606,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             });
 
-            // Rooms fetching
             try {
                 const rRes = await fetch(`${API_URL}/admin/rooms`);
                 if (rRes.ok) {
@@ -465,6 +636,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 },
                                 'geometry': { 'type': 'Polygon', 'coordinates': coords }
                             });
+
+                            // Generate and push 3D Furniture features
+                            const furn = generateFurnitureForRoom(r, coords, base_h);
+                            features.push(...furn);
+
                         } catch (err) {
                             console.error("Failed loading room coordinates: ", err);
                         }
@@ -579,6 +755,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                 window.outdoorMap.setFilter('indoor-rooms', [
                     'all',
                     ['==', ['get', 'type'], 'room'],
+                    ['==', ['get', 'level'], i],
+                    ['==', ['get', 'parent'], activeBuildingId]
+                ]);
+
+                window.outdoorMap.setFilter('indoor-furniture', [
+                    'all',
+                    ['==', ['get', 'type'], 'furniture'],
                     ['==', ['get', 'level'], i],
                     ['==', ['get', 'parent'], activeBuildingId]
                 ]);
