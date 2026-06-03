@@ -108,9 +108,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             window.outdoorMap.removeSource('world-mask');
         }
         if (window.outdoorMap.getSource('custom-campus')) {
-            if (window.outdoorMap.getLayer('building-shells')) window.outdoorMap.removeLayer('building-shells');
             if (window.outdoorMap.getLayer('indoor-rooms')) window.outdoorMap.removeLayer('indoor-rooms');
-            window.outdoorMap.removeSource('custom-campus');
+            if (window.outdoorMap.getLayer('indoor-walls')) window.outdoorMap.removeLayer('indoor-walls');
+            if (window.outdoorMap.getLayer('indoor-furniture')) window.outdoorMap.removeLayer('indoor-furniture');
+            if (window.outdoorMap.getLayer('indoor-floor-plate')) window.outdoorMap.removeLayer('indoor-floor-plate');
         }
 
         // MASK LAYER: Hides the rest of the world outside the campus
@@ -277,6 +278,20 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
+        // LAYER 2.5: Interior Room Walls
+        window.outdoorMap.addLayer({
+            'id': 'indoor-walls',
+            'type': 'fill-extrusion',
+            'source': 'custom-campus',
+            'filter': ['all', ['==', ['get', 'type'], 'room-wall'], ['==', ['get', 'level'], -1]],
+            'paint': {
+                'fill-extrusion-color': currentTheme === 'dark' ? '#384252' : '#cbd5e1',
+                'fill-extrusion-base': ['get', 'base_h'],
+                'fill-extrusion-height': ['get', 'ceil_h'],
+                'fill-extrusion-opacity': 0.85
+            }
+        });
+
         // LAYER 3: Indoor Furniture (Hidden by default)
         window.outdoorMap.addLayer({
             'id': 'indoor-furniture',
@@ -349,99 +364,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     function generateFurnitureForRoom(r, coords, base_h) {
-        const furnitureFeatures = [];
-        if (!coords || coords.length === 0) return furnitureFeatures;
-
-        let minX = Infinity, maxX = -Infinity;
-        let minY = Infinity, maxY = -Infinity;
-        let sumX = 0, sumY = 0, count = 0;
-
-        coords[0].forEach(pt => {
-            minX = Math.min(minX, pt[0]);
-            maxX = Math.max(maxX, pt[0]);
-            minY = Math.min(minY, pt[1]);
-            maxY = Math.max(maxY, pt[1]);
-            sumX += pt[0];
-            sumY += pt[1];
-            count++;
-        });
-
-        const cx = sumX / count;
-        const cy = sumY / count;
-        const roomPoly = turf.polygon(coords);
-
-        if (r.room_type === 'Classroom') {
-            const stepX = 2.4 * 9.2e-6;
-            const stepY = 2.4 * 9.0e-6;
-
-            for (let x = minX + stepX / 2; x < maxX; x += stepX) {
-                for (let y = minY + stepY / 2; y < maxY; y += stepY) {
-                    const pt = turf.point([x, y]);
-                    if (turf.booleanPointInPolygon(pt, roomPoly)) {
-                        furnitureFeatures.push({
-                            'type': 'Feature',
-                            'properties': {
-                                'type': 'furniture',
-                                'sub_type': 'table',
-                                'parent': r.building_id,
-                                'level': r.floor_level,
-                                'base_h': base_h,
-                                'ceil_h': base_h + 0.75
-                            },
-                            'geometry': {
-                                'type': 'Polygon',
-                                'coordinates': makeRect(x, y, 1.2, 0.6)
-                            }
-                        });
-                    }
-                }
-            }
-        } else if (r.room_type === 'Meeting') {
-            furnitureFeatures.push({
-                'type': 'Feature',
-                'properties': {
-                    'type': 'furniture',
-                    'sub_type': 'table',
-                    'parent': r.building_id,
-                    'level': r.floor_level,
-                    'base_h': base_h,
-                    'ceil_h': base_h + 0.75
-                },
-                'geometry': {
-                    'type': 'Polygon',
-                    'coordinates': makeRect(cx, cy, 3.2, 1.2)
-                }
-            });
-        } else if (r.room_type === 'Office') {
-            const width = (maxX - minX) / 9.2e-6;
-            const height = (maxY - minY) / 9e-6;
-
-            if (width > 6 && height > 6) {
-                const desk1_x = cx - 1.5 * 9.2e-6;
-                const desk1_y = cy + 1.0 * 9.0e-6;
-                const desk2_x = cx + 1.5 * 9.2e-6;
-                const desk2_y = cy - 1.0 * 9.0e-6;
-
-                furnitureFeatures.push({
-                    'type': 'Feature',
-                    'properties': { 'type': 'furniture', 'sub_type': 'table', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.75 },
-                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk1_x, desk1_y, 1.4, 0.7) }
-                });
-
-                furnitureFeatures.push({
-                    'type': 'Feature',
-                    'properties': { 'type': 'furniture', 'sub_type': 'table', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.75 },
-                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(desk2_x, desk2_y, 1.4, 0.7) }
-                });
-            } else {
-                furnitureFeatures.push({
-                    'type': 'Feature',
-                    'properties': { 'type': 'furniture', 'sub_type': 'table', 'parent': r.building_id, 'level': r.floor_level, 'base_h': base_h, 'ceil_h': base_h + 0.75 },
-                    'geometry': { 'type': 'Polygon', 'coordinates': makeRect(cx, cy, 1.4, 0.7) }
-                });
-            }
-        }
-        return furnitureFeatures;
+        return [];
     }
 
     async function refreshCampusData() {
@@ -531,6 +454,29 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 },
                                 'geometry': { 'type': 'Polygon', 'coordinates': coords }
                             });
+
+                            // Generate 3D Walls for the room
+                            try {
+                                const outerRing = coords[0];
+                                if (outerRing && outerRing.length >= 2) {
+                                    const line = turf.lineString(outerRing);
+                                    const bufferedWall = turf.buffer(line, 0.15, { units: 'meters' });
+                                    features.push({
+                                        'type': 'Feature',
+                                        'properties': {
+                                            'type': 'room-wall',
+                                            'id': r.room_id + '_wall',
+                                            'parent': r.building_id,
+                                            'level': r.floor_level,
+                                            'base_h': base_h,
+                                            'ceil_h': ceil_h
+                                        },
+                                        'geometry': bufferedWall.geometry
+                                    });
+                                }
+                            } catch (wallErr) {
+                                console.error("Failed to generate wall for room: ", wallErr);
+                            }
 
                             // Generate and push 3D Furniture features
                             const furn = generateFurnitureForRoom(r, coords, base_h);
@@ -655,6 +601,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ['==', ['get', 'parent'], activeBuildingId]
                 ]);
 
+                window.outdoorMap.setFilter('indoor-walls', [
+                    'all',
+                    ['==', ['get', 'type'], 'room-wall'],
+                    ['==', ['get', 'level'], i],
+                    ['==', ['get', 'parent'], activeBuildingId]
+                ]);
+
                 window.outdoorMap.setFilter('indoor-floor-plate', [
                     'all',
                     ['==', ['get', 'type'], 'building'],
@@ -759,6 +712,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('exit-building-btn').addEventListener('click', () => {
         window.outdoorMap.flyTo({ center: ritCenter, zoom: 17.5, pitch: 60, duration: 1500 });
         window.outdoorMap.setFilter('indoor-rooms', ['==', ['get', 'level'], -1]);
+        window.outdoorMap.setFilter('indoor-walls', ['==', ['get', 'level'], -1]);
         window.outdoorMap.setFilter('indoor-furniture', ['==', ['get', 'level'], -1]);
         window.outdoorMap.setFilter('indoor-floor-plate', ['==', ['get', 'id'], -1]);
         window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
