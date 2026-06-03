@@ -635,12 +635,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                             locateLocation(r.room_id);
                         };
 
+                        const base_h = r.floor_level * 4;
                         const m = new mapboxgl.Marker({
                             element: el,
-                            pitchAlignment: 'map',
-                            rotationAlignment: 'map'
+                            pitchAlignment: 'viewport',
+                            rotationAlignment: 'viewport'
                         })
-                        .setLngLat([r.coordinate_y, r.coordinate_x])
+                        .setLngLat([r.coordinate_y, r.coordinate_x, base_h + 1.5])
                         .addTo(window.outdoorMap);
 
                         roomMarkersList.push(m);
