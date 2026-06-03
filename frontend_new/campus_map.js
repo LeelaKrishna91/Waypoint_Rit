@@ -260,8 +260,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
                 ],
                 'fill-extrusion-base': ['get', 'base_h'],
-                'fill-extrusion-height': ['get', 'ceil_h'],
-                'fill-extrusion-opacity': 1.0
+                'fill-extrusion-height': ['+', ['get', 'base_h'], 0.1],
+                'fill-extrusion-opacity': 0.6
             }
         });
 
@@ -526,10 +526,25 @@ document.addEventListener("DOMContentLoaded", async () => {
                         if (!r.footprint_coordinates) return;
 
                         try {
-                            let coords = JSON.parse(r.footprint_coordinates);
+                            let rawCoords = r.footprint_coordinates.trim();
+                            if (rawCoords.endsWith(',')) {
+                                rawCoords = rawCoords.slice(0, -1);
+                            }
+                            let coords = JSON.parse(rawCoords);
                             if (coords.length > 0 && typeof coords[0][0] === 'number') {
                                 coords = [coords];
                             }
+
+                            // Ensure coordinates are closed
+                            coords = coords.map(ring => {
+                                if (ring.length < 3) return ring;
+                                const first = ring[0];
+                                const last = ring[ring.length - 1];
+                                if (first[0] !== last[0] || first[1] !== last[1]) {
+                                    return [...ring, [first[0], first[1]]];
+                                }
+                                return ring;
+                            });
 
                             const base_h = r.floor_level * 4;
                             const z_thick = (r.z_coordinate !== undefined && r.z_coordinate !== null) ? parseFloat(r.z_coordinate) : 3.5;

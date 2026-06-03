@@ -254,8 +254,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
                 ],
                 'fill-extrusion-base': ['get', 'base_h'],
-                'fill-extrusion-height': ['get', 'ceil_h'],
-                'fill-extrusion-opacity': 1.0
+                'fill-extrusion-height': ['+', ['get', 'base_h'], 0.1],
+                'fill-extrusion-opacity': 0.6
             }
         });
 
@@ -511,32 +511,51 @@ document.addEventListener("DOMContentLoaded", async () => {
                     rooms.forEach(r => {
                         if (!r.footprint_coordinates) return;
 
-                        let coords = JSON.parse(r.footprint_coordinates);
-                        if (coords.length > 0 && typeof coords[0][0] === 'number') {
-                            coords = [coords];
+                        try {
+                            let rawCoords = r.footprint_coordinates.trim();
+                            if (rawCoords.endsWith(',')) {
+                                rawCoords = rawCoords.slice(0, -1);
+                            }
+                            let coords = JSON.parse(rawCoords);
+                            if (coords.length > 0 && typeof coords[0][0] === 'number') {
+                                coords = [coords];
+                            }
+
+                            // Ensure coordinates are closed
+                            coords = coords.map(ring => {
+                                if (ring.length < 3) return ring;
+                                const first = ring[0];
+                                const last = ring[ring.length - 1];
+                                if (first[0] !== last[0] || first[1] !== last[1]) {
+                                    return [...ring, [first[0], first[1]]];
+                                }
+                                return ring;
+                            });
+
+                            const base_h = r.floor_level * 4;
+                            const z_thick = (r.z_coordinate !== undefined && r.z_coordinate !== null) ? parseFloat(r.z_coordinate) : 3.5;
+                            const ceil_h = base_h + z_thick;
+
+                            features.push({
+                                'type': 'Feature',
+                                'properties': {
+                                    'type': 'room',
+                                    'id': r.room_id,
+                                    'parent': r.building_id,
+                                    'level': r.floor_level,
+                                    'base_h': base_h,
+                                    'ceil_h': ceil_h,
+                                    'room_type': r.room_type
+                                },
+                                'geometry': { 'type': 'Polygon', 'coordinates': coords }
+                            });
+
+                            // Generate and push 3D Furniture features
+                            const furn = generateFurnitureForRoom(r, coords, base_h);
+                            features.push(...furn);
+                        } catch (err) {
+                            console.error("Failed loading room coordinates: ", err);
                         }
-
-                        const base_h = r.floor_level * 4;
-                        const z_thick = (r.z_coordinate !== undefined && r.z_coordinate !== null) ? parseFloat(r.z_coordinate) : 3.5;
-                        const ceil_h = base_h + z_thick;
-
-                        features.push({
-                            'type': 'Feature',
-                            'properties': {
-                                'type': 'room',
-                                'id': r.room_id,
-                                'parent': r.building_id,
-                                'level': r.floor_level,
-                                'base_h': base_h,
-                                'ceil_h': ceil_h,
-                                'room_type': r.room_type
-                            },
-                            'geometry': { 'type': 'Polygon', 'coordinates': coords }
-                        });
-
-                        // Generate and push 3D Furniture features
-                        const furn = generateFurnitureForRoom(r, coords, base_h);
-                        features.push(...furn);
                     });
                 }
             } catch (err) { console.log("Room data not yet available."); }
