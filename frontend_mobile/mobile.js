@@ -597,7 +597,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
     window.outdoorMap.on('click', 'building-shells', (e) => {
         const props = e.features[0].properties;
-        const b = buildingsData.find(item => item.building_id === parseInt(props.id));
+        const bId = props.id !== undefined ? props.id : e.features[0].id;
+        const b = buildingsData.find(item => item.building_id === parseInt(bId));
         if (b) {
             selectBuilding(b);
         }
@@ -667,7 +668,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.outdoorMap.setFilter('building-shells', [
             'all',
             ['==', ['get', 'type'], 'building'],
-            ['!=', ['get', 'id'], activeBuildingId]
+            ['!=', ['to-number', ['get', 'id']], activeBuildingId]
         ]);
 
         // Set Details in Bottom Sheet
@@ -692,28 +693,28 @@ document.addEventListener("DOMContentLoaded", async () => {
                 window.outdoorMap.setFilter('indoor-rooms', [
                     'all',
                     ['==', ['get', 'type'], 'room'],
-                    ['==', ['get', 'level'], i],
-                    ['==', ['get', 'parent'], activeBuildingId]
+                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
+                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
                 ]);
 
                 window.outdoorMap.setFilter('indoor-furniture', [
                     'all',
                     ['==', ['get', 'type'], 'furniture'],
-                    ['==', ['get', 'level'], i],
-                    ['==', ['get', 'parent'], activeBuildingId]
+                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
+                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
                 ]);
 
                 window.outdoorMap.setFilter('indoor-walls', [
                     'all',
                     ['==', ['get', 'type'], 'room-wall'],
-                    ['==', ['get', 'level'], i],
-                    ['==', ['get', 'parent'], activeBuildingId]
+                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
+                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
                 ]);
 
                 window.outdoorMap.setFilter('indoor-floor-plate', [
                     'all',
                     ['==', ['get', 'type'], 'building'],
-                    ['==', ['get', 'id'], activeBuildingId]
+                    ['==', ['to-number', ['get', 'id']], parseInt(activeBuildingId)]
                 ]);
                 window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', i * 4);
                 window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', i * 4 + 0.05);
