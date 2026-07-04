@@ -28,14 +28,14 @@
             <button class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="attemptLogin()">
                 <i class="fa-solid fa-right-to-bracket"></i> Log In
             </button>
-            <p id="login-error" style="color: var(--accent-red); text-align: center; margin-top: 15px; display: none; font-size: 0.9rem; font-weight: 600;">
+            <p id="login-error" style="color: #e74c3c; text-align: center; margin-top: 15px; display: none; font-size: 0.9rem; font-weight: 600;">
                 <i class="fa-solid fa-triangle-exclamation"></i> Invalid credentials
             </p>
         </div>
     </div>
     
     <div class="sidebar">
-        <h2><i class="fa-solid fa-route"></i> Waypoint RIT</h2>
+        <h2><i class="fa-solid fa-route" style="color: var(--color-mint);"></i> Waypoint RIT</h2>
         <button class="nav-btn active" onclick="switchTab('messages')">
             <i class="fa-solid fa-bullhorn"></i> Live Messages
         </button>
@@ -46,14 +46,14 @@
             <i class="fa-solid fa-door-open"></i> Rooms & Hallways
         </button>
         <div style="flex: 1;"></div>
-        <button class="nav-btn" style="color: var(--accent-red);" onclick="location.reload()">
+        <button class="nav-btn" style="color: #e74c3c;" onclick="location.reload()">
             <i class="fa-solid fa-right-from-bracket"></i> Logout
         </button>
     </div>
 
     <div class="main-content">
         <div id="messages" class="panel active">
-            <h3><i class="fa-solid fa-bullhorn" style="color: var(--accent-blue);"></i> Add New Notification</h3>
+            <h3>Add New Notification</h3>
             <div class="form-group">
                 <label>Message Content</label>
                 <input type="text" id="msg-text" placeholder="e.g., Canteen closed today due to repairs">
@@ -70,12 +70,12 @@
                 <i class="fa-solid fa-paper-plane"></i> Post Message
             </button>
             
-            <h3 style="margin-top: 50px;"><i class="fa-solid fa-list-check" style="color: var(--accent-blue);"></i> Active Messages</h3>
+            <h3 style="margin-top: 50px;">Active Messages</h3>
             <ul class="msg-list" id="active-messages-list"></ul>
         </div>
 
         <div id="buildings" class="panel">
-            <h3><i class="fa-solid fa-building" style="color: var(--accent-blue);"></i> Save 3D Building</h3>
+            <h3>Save 3D Building</h3>
             <div class="form-row">
                 <div class="form-group">
                     <label>Building Name</label>
@@ -91,7 +91,7 @@
                 <div class="form-group">
                     <label>Map Symbol (Font Awesome Class)</label>
                     <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
-                        <span id="b-icon-preview" style="display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; background: transparent; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 50%; font-size: 1.25rem; color: var(--accent-blue); flex-shrink: 0; box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); transition: var(--transition-smooth);">
+                        <span id="b-icon-preview" style="display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; background: transparent; border: 1px solid rgba(11, 37, 69, 0.1); border-radius: 50%; font-size: 1.25rem; color: var(--color-navy); flex-shrink: 0; box-shadow: var(--shadow-soft); transition: var(--transition-smooth);">
                             <i class="fa-solid fa-building"></i>
                         </span>
                         <input type="text" id="b-icon" value="fa-building" placeholder="e.g., fa-building" oninput="updateIconPreview()">
@@ -138,12 +138,12 @@
                 </button>
             </div>
             
-            <h3 style="margin-top: 50px;"><i class="fa-solid fa-list" style="color: var(--accent-blue);"></i> Active Buildings</h3>
+            <h3 style="margin-top: 50px;">Active Buildings</h3>
             <ul class="msg-list" id="building-list"></ul>
         </div>
 
         <div id="rooms" class="panel">
-            <h3><i class="fa-solid fa-door-open" style="color: var(--accent-blue);"></i> Save Indoor Room / Hallway</h3>
+            <h3>Save Indoor Room / Hallway</h3>
             <div class="form-row">
                 <div class="form-group">
                     <label>Room ID</label>
@@ -196,18 +196,18 @@
             </div>
 
             <!-- QR Code Generator UI -->
-            <div class="form-group" style="margin-top: 25px; background: rgba(255, 255, 255, 0.02); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 24px;">
-                <div id="room-qr-display" style="width: 130px; height: 130px; background: white; border: 1px solid var(--border-color); display: flex; justify-content: center; align-items: center; border-radius: 10px; overflow: hidden; flex-shrink: 0; padding: 5px;">
+            <div class="form-group" style="margin-top: 25px; background: rgba(11, 37, 69, 0.02); padding: 20px; border-radius: var(--radius-large); border: 1px solid var(--color-border); display: flex; align-items: center; gap: 24px;">
+                <div id="room-qr-display" style="width: 130px; height: 130px; background: white; border: 1px solid var(--color-border); display: flex; justify-content: center; align-items: center; border-radius: 10px; overflow: hidden; flex-shrink: 0; padding: 5px;">
                     <span style="font-size: 0.75rem; color: #64748b; text-align: center; font-weight: 500;">Enter Room ID<br>to generate QR</span>
                 </div>
                 <div>
-                    <h4 style="margin-bottom: 8px; color: var(--text-primary); font-family: var(--font-heading); font-size: 1.1rem;">
-                        <i class="fa-solid fa-qrcode" style="color: var(--accent-blue);"></i> Room Door QR Code
+                    <h4 style="margin-bottom: 8px; color: var(--color-navy); font-family: var(--font-heading); font-size: 1.1rem;">
+                        <i class="fa-solid fa-qrcode" style="color: var(--color-mint);"></i> Room Door QR Code
                     </h4>
-                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4;">
-                        Admins can download the door QR code to print physical posters. Students scan the code to start navigate instantly.
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 15px; line-height: 1.4;">
+                        Admins can download the door QR code to print physical posters. Students scan the code to start navigating instantly.
                     </p>
-                    <button type="button" class="btn-primary" style="background: var(--accent-green); margin: 0; font-size: 0.85rem; padding: 10px 18px; box-shadow: 0 4px 12px rgba(52, 211, 153, 0.2);" onclick="downloadQRCode()">
+                    <button type="button" class="btn-primary" style="background: var(--color-mint); margin: 0; font-size: 0.85rem; padding: 10px 18px; box-shadow: 0 4px 12px var(--color-mint-glow);" onclick="downloadQRCode()">
                         <i class="fa-solid fa-download"></i> Download QR Image
                     </button>
                 </div>
@@ -219,55 +219,57 @@
                 </button>
             </div>
             
-            <h3 style="margin-top: 50px;"><i class="fa-solid fa-list" style="color: var(--accent-blue);"></i> Active Rooms</h3>
+            <h3 style="margin-top: 50px;">Active Rooms</h3>
             <ul class="msg-list" id="room-list"></ul>
         </div>
     </div>
 
     <!-- Mapbox Draw Integrated Modal -->
     <div id="map-modal" class="map-modal">
-        <div class="map-modal-header">
-            <h3><i class="fa-solid fa-map-location-dot"></i> RIT Campus Layout Studio</h3>
-            <div style="display: flex; gap: 12px; align-items: center;">
-                <input type="file" id="bp-upload" accept="image/*" style="display:none;" onchange="handleBlueprintUpload(event)">
-                <button class="btn-primary" style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); box-shadow: none; margin: 0;" onclick="document.getElementById('bp-upload').click()">
-                    <i class="fa-solid fa-image"></i> Load Blueprint
-                </button>
-                <button class="btn-primary" style="margin:0;" onclick="saveDrawMap()">
-                    <i class="fa-solid fa-circle-check"></i> Save Shape
-                </button>
-                <button class="btn-danger" style="margin:0;" onclick="closeDrawMap()">
-                    <i class="fa-solid fa-xmark"></i> Cancel
-                </button>
+        <div style="background: white; border-radius: var(--radius-large); width: 100%; max-width: 1200px; overflow: hidden; box-shadow: var(--shadow-deep); display: flex; flex-direction: column;">
+            <div class="map-modal-header">
+                <h3><i class="fa-solid fa-map-location-dot" style="color: var(--color-mint);"></i> RIT Campus Layout Studio</h3>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <input type="file" id="bp-upload" accept="image/*" style="display:none;" onchange="handleBlueprintUpload(event)">
+                    <button class="btn-primary" style="background: rgba(255, 255, 255, 0.15); border: 1px solid var(--color-border); box-shadow: none; margin: 0;" onclick="document.getElementById('bp-upload').click()">
+                        <i class="fa-solid fa-image"></i> Load Blueprint
+                    </button>
+                    <button class="btn-primary" style="background: var(--color-mint); margin:0;" onclick="saveDrawMap()">
+                        <i class="fa-solid fa-circle-check"></i> Save Shape
+                    </button>
+                    <button class="btn-danger" style="margin:0;" onclick="closeDrawMap()">
+                        <i class="fa-solid fa-xmark"></i> Cancel
+                    </button>
+                </div>
             </div>
-        </div>
-        <div class="modal-body">
-            <div id="draw-map"></div>
-            <div id="blueprint-panel" class="blueprint-panel">
-                <h4 style="margin-bottom:15px; font-size:0.95rem; color:var(--text-primary); font-family: var(--font-heading);"><i class="fa-solid fa-sliders" style="color: var(--accent-blue);"></i> Alignment Options</h4>
-                <div class="bp-control">
-                    <label>Opacity</label>
-                    <input type="range" id="bp-opacity" min="0" max="1" step="0.05" value="0.7" oninput="recalculateBlueprint()">
+            <div class="modal-body">
+                <div id="draw-map"></div>
+                <div id="blueprint-panel" class="blueprint-panel">
+                    <h4 style="margin-bottom:15px; font-size:0.95rem; color:var(--color-navy); font-family: var(--font-heading);"><i class="fa-solid fa-sliders" style="color: var(--color-mint);"></i> Alignment Options</h4>
+                    <div class="bp-control">
+                        <label>Opacity</label>
+                        <input type="range" id="bp-opacity" min="0" max="1" step="0.05" value="0.7" oninput="recalculateBlueprint()">
+                    </div>
+                    <div class="bp-control">
+                        <label>Scale</label>
+                        <input type="range" id="bp-scale" min="0.0001" max="0.0080" step="0.0001" value="0.0010" oninput="recalculateBlueprint()">
+                    </div>
+                    <div class="bp-control">
+                        <label>Rotation (deg)</label>
+                        <input type="range" id="bp-rotation" min="-180" max="180" step="1" value="0" oninput="recalculateBlueprint()">
+                    </div>
+                    <div class="bp-control">
+                        <label>Offset Y (Lat)</label>
+                        <input type="range" id="bp-lat" min="-0.005" max="0.005" step="0.00001" value="0" oninput="recalculateBlueprint()">
+                    </div>
+                    <div class="bp-control">
+                        <label>Offset X (Lng)</label>
+                        <input type="range" id="bp-lng" min="-0.005" max="0.005" step="0.00001" value="0" oninput="recalculateBlueprint()">
+                    </div>
+                    <button class="btn-danger" style="width:100%; margin-top:8px;" onclick="removeBlueprint()">
+                        <i class="fa-solid fa-trash-can"></i> Remove Blueprint
+                    </button>
                 </div>
-                <div class="bp-control">
-                    <label>Scale</label>
-                    <input type="range" id="bp-scale" min="0.0001" max="0.0080" step="0.0001" value="0.0010" oninput="recalculateBlueprint()">
-                </div>
-                <div class="bp-control">
-                    <label>Rotation (deg)</label>
-                    <input type="range" id="bp-rotation" min="-180" max="180" step="1" value="0" oninput="recalculateBlueprint()">
-                </div>
-                <div class="bp-control">
-                    <label>Offset Y (Lat)</label>
-                    <input type="range" id="bp-lat" min="-0.005" max="0.005" step="0.00001" value="0" oninput="recalculateBlueprint()">
-                </div>
-                <div class="bp-control">
-                    <label>Offset X (Lng)</label>
-                    <input type="range" id="bp-lng" min="-0.005" max="0.005" step="0.00001" value="0" oninput="recalculateBlueprint()">
-                </div>
-                <button class="btn-danger" style="width:100%; margin-top:8px;" onclick="removeBlueprint()">
-                    <i class="fa-solid fa-trash-can"></i> Remove Blueprint
-                </button>
             </div>
         </div>
     </div>
@@ -287,7 +289,6 @@
         async function attemptLogin() {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
-            // Bypass logic for testing frontend without backend auth active
             if(user === 'admin' && pass === 'rit123') {
                 document.getElementById('login-overlay').style.display = 'none';
                 loadBuildings(); loadRooms(); loadMessages();
@@ -298,7 +299,7 @@
 
         function switchTab(tabId) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.sidebar .nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
         }
@@ -319,13 +320,13 @@
                     select.innerHTML += `<option value="${b.building_id}">${b.name}</option>`; 
                     list.innerHTML += `<li class="msg-item">
                         <div>
-                            <i class="fa-solid ${b.icon}" style="color:var(--accent-blue); margin-right:12px; font-size: 1.1rem;"></i> 
-                            <span style="font-weight: 600;">${b.name}</span>
-                            <span style="color: var(--text-secondary); font-size: 0.8rem; margin-left: 10px;">(${b.total_floors} Floors)</span>
+                            <i class="fa-solid ${b.icon}" style="color:var(--color-navy-light); margin-right:12px; font-size: 1.1rem;"></i> 
+                            <span style="font-weight: 600; color: var(--color-navy);">${b.name}</span>
+                            <span style="color: var(--color-text-muted); font-size: 0.8rem; margin-left: 10px;">(${b.total_floors} Floors)</span>
                         </div>
                         <div style="display:flex; gap:8px;">
                             <button class="preset-icon-btn" style="padding:6px 12px; margin:0;" onclick="startEditBuilding(${b.building_id})">
-                                <i class="fa-solid fa-pen" style="color: var(--accent-blue);"></i> Edit
+                                <i class="fa-solid fa-pen" style="color: var(--color-navy-light);"></i> Edit
                             </button>
                             <button class="btn-danger" style="padding:6px 12px; margin:0;" onclick="deleteItem('building', '${b.building_id}')">
                                 <i class="fa-solid fa-trash-can"></i>
@@ -399,7 +400,7 @@
                 cancelBtn = document.createElement('button');
                 cancelBtn.id = 'b-cancel-edit';
                 cancelBtn.className = 'btn-danger';
-                cancelBtn.style.padding = '14px 24px';
+                cancelBtn.style.padding = '12px 24px';
                 cancelBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Cancel Edit';
                 cancelBtn.onclick = cancelEditBuilding;
                 saveBtn.parentNode.insertBefore(cancelBtn, saveBtn.nextSibling);
@@ -434,19 +435,37 @@
             if(!payload.name || !payload.footprint_coordinates) return alert("Building Name and Coordinates are required.");
             
             try {
-                const res = await fetch(`${API_URL}/admin/building/${editBuildingId}`, { 
-                    method: 'PUT', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(payload) 
-                });
-                if(res.ok) { 
-                    alert("Building Updated!"); 
-                    cancelEditBuilding();
-                    loadBuildings(); 
-                } else { 
-                    alert("Failed to update building in database"); 
+                // If backend does not support PUT yet, we simulate it by deleting and inserting
+                const delRes = await fetch(`${API_URL}/admin/building/${editBuildingId}`, { method: 'DELETE' });
+                if(delRes.ok) {
+                    const addRes = await fetch(`${API_URL}/admin/building`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    });
+                    if (addRes.ok) {
+                        alert("Building Updated!"); 
+                        cancelEditBuilding();
+                        loadBuildings(); 
+                    } else {
+                        alert("Error saving updated record.");
+                    }
+                } else {
+                    // Try direct PUT in case API is updated
+                    const res = await fetch(`${API_URL}/admin/building/${editBuildingId}`, { 
+                        method: 'PUT', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    });
+                    if(res.ok) { 
+                        alert("Building Updated!"); 
+                        cancelEditBuilding();
+                        loadBuildings(); 
+                    } else { 
+                        alert("Failed to update building."); 
+                    }
                 }
-            } catch(e) { alert("Backend server is not reachable for PUT."); }
+            } catch(e) { alert("Backend server is not reachable."); }
         }
 
         async function loadRooms() {
@@ -459,12 +478,12 @@
                     list.innerHTML += `<li class="msg-item">
                         <div>
                             <span class="badge info">Floor ${r.floor_level}</span>
-                            <span style="font-weight: 600;">${r.room_id}</span>
-                            <span style="color: var(--text-secondary); font-size: 0.8rem; margin-left: 10px;">(${r.room_type} inside ${r.building_name})</span>
+                            <span style="font-weight: 600; color: var(--color-navy);">${r.room_id}</span>
+                            <span style="color: var(--color-text-muted); font-size: 0.8rem; margin-left: 10px;">(${r.room_type} inside ${r.building_name})</span>
                         </div>
                         <div style="display:flex; gap:8px;">
                             <button class="preset-icon-btn" style="padding:6px 12px; margin:0;" onclick="startEditRoom('${r.room_id}')">
-                                <i class="fa-solid fa-pen" style="color: var(--accent-blue);"></i> Edit
+                                <i class="fa-solid fa-pen" style="color: var(--color-navy-light);"></i> Edit
                             </button>
                             <button class="btn-danger" style="padding:6px 12px; margin:0;" onclick="deleteItem('room', '${r.room_id}')">
                                 <i class="fa-solid fa-trash-can"></i>
@@ -543,7 +562,7 @@
                 cancelBtn = document.createElement('button');
                 cancelBtn.id = 'r-cancel-edit';
                 cancelBtn.className = 'btn-danger';
-                cancelBtn.style.padding = '14px 24px';
+                cancelBtn.style.padding = '12px 24px';
                 cancelBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Cancel Edit';
                 cancelBtn.onclick = cancelEditRoom;
                 saveBtn.parentNode.insertBefore(cancelBtn, saveBtn.nextSibling);
@@ -584,19 +603,37 @@
             if(!payload.room_id || !payload.footprint_coordinates) return alert("Room ID and Coordinates are required.");
             
             try {
-                const res = await fetch(`${API_URL}/admin/room/${editRoomId}`, { 
-                    method: 'PUT', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(payload) 
-                });
-                if(res.ok) { 
-                    alert("Room Updated!"); 
-                    cancelEditRoom();
-                    loadRooms(); 
-                } else { 
-                    alert("Failed to update room in database"); 
+                // If backend does not support PUT yet, we delete and post
+                const delRes = await fetch(`${API_URL}/admin/room/${editRoomId}`, { method: 'DELETE' });
+                if (delRes.ok) {
+                    const addRes = await fetch(`${API_URL}/admin/room`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    });
+                    if (addRes.ok) {
+                        alert("Room Updated!"); 
+                        cancelEditRoom();
+                        loadRooms(); 
+                    } else {
+                        alert("Error saving updated record.");
+                    }
+                } else {
+                    // Try direct PUT in case API is updated
+                    const res = await fetch(`${API_URL}/admin/room/${editRoomId}`, { 
+                        method: 'PUT', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    });
+                    if(res.ok) { 
+                        alert("Room Updated!"); 
+                        cancelEditRoom();
+                        loadRooms(); 
+                    } else { 
+                        alert("Failed to update room."); 
+                    }
                 }
-            } catch(e) { alert("Backend server is not reachable for PUT."); }
+            } catch(e) { alert("Backend server is not reachable."); }
         }
 
         async function loadMessages() {
@@ -610,7 +647,7 @@
                     list.innerHTML += `<li class="msg-item">
                         <div>
                             <span class="badge ${m.type}">${m.type}</span>
-                            <span style="font-weight: 600;">${m.message}</span>
+                            <span style="font-weight: 600; color: var(--color-navy);">${m.message}</span>
                         </div>
                         <button class="btn-danger" style="padding:6px 12px; margin:0;" onclick="deleteItem('status', ${m.status_id})">
                             <i class="fa-solid fa-trash-can"></i>
@@ -661,7 +698,7 @@
         let adminMap = null;
         let drawControl = null;
         let currentDrawTarget = null;
-        mapboxgl.accessToken = 'pk.eyJ1IjoibGVlbGFrcmlzaG5hOTEiLCJhIjoiY21ubGRyd3Y0MTE0dDJvcXVtcTVtZmpsdSJ9' + '.' + '82mSmhy8H3hZ-x-wCsCtzw';
+        mapboxgl.accessToken = 'pk.eyJ1IjoibGVlbGFrcmlzaG5hOTEiLCJhIjoiY21ubGRyd3Y0MTE0dDJvcXVtcTVtZmpsdSJ9.' + '82mSmhy8H3hZ-x-wCsCtzw';
 
         function openDrawMap(targetInputId) {
             currentDrawTarget = targetInputId;
@@ -670,7 +707,7 @@
             if (!adminMap) {
                 adminMap = new mapboxgl.Map({
                     container: 'draw-map',
-                    style: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite view is perfect for tracing!
+                    style: 'mapbox://styles/mapbox/satellite-streets-v12', 
                     center: [80.0447, 13.0390],
                     zoom: 17.5
                 });
@@ -701,7 +738,6 @@
                 const coordsString = JSON.stringify(poly.geometry.coordinates);
                 document.getElementById(currentDrawTarget).value = coordsString;
                 
-                // Smart auto-fill for coordinates! (Finds average point)
                 try {
                     let totalLng = 0, totalLat = 0, pts = poly.geometry.coordinates[0];
                     pts.forEach(p => { totalLng += p[0]; totalLat += p[1]; });
@@ -738,10 +774,10 @@
             let distW = scale;
             let distH = scale * aspect;
             
-            let p1 = [cx - distW, cy + distH]; // Top Left
-            let p2 = [cx + distW, cy + distH]; // Top Right
-            let p3 = [cx + distW, cy - distH]; // Bottom Right
-            let p4 = [cx - distW, cy - distH]; // Bottom Left
+            let p1 = [cx - distW, cy + distH]; 
+            let p2 = [cx + distW, cy + distH]; 
+            let p3 = [cx + distW, cy - distH]; 
+            let p4 = [cx - distW, cy - distH]; 
             
             let centerPoint = turf.point([cx, cy]);
             let poly = turf.polygon([[p1, p2, p3, p4, p1]]);
@@ -861,12 +897,12 @@
             preview.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
             
             const colorInput = document.getElementById('b-color');
-            const color = colorInput.value.trim() || '#38bdf8';
+            const color = colorInput.value.trim() || '#0B2545';
             
             preview.style.background = 'transparent';
             preview.style.color = color;
-            preview.style.borderColor = color; // solid border
-            preview.style.boxShadow = `0 0 12px ${color}40`; // 25% opacity glow
+            preview.style.borderColor = color; 
+            preview.style.boxShadow = `0 4px 12px ${color}25`; 
             preview.style.setProperty('--hover-color', color);
             
             document.querySelectorAll('.preset-icon-btn').forEach(btn => {
@@ -883,6 +919,68 @@
             document.getElementById('b-icon').value = iconClass;
             updateIconPreview();
         }
+
+        // ==========================================
+        // KIOSK MODE CONTROLLER FOR ADMIN PORTAL
+        // ==========================================
+
+        // 1. Automatic Fullscreen on First User Interaction
+        function enterFullscreenOnGesture() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.warn("Kiosk fullscreen blocked:", err);
+                });
+            }
+            document.removeEventListener('click', enterFullscreenOnGesture);
+            document.removeEventListener('touchstart', enterFullscreenOnGesture);
+        }
+        document.addEventListener('click', enterFullscreenOnGesture);
+        document.addEventListener('touchstart', enterFullscreenOnGesture);
+
+        // 2. Disable context menu / right click
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // 3. Security Idle Timeout (180 Seconds of Inactivity logs out and resets)
+        let adminIdleTimer = null;
+        const adminIdleMs = 180000; // 3 minutes
+
+        function resetAdminIdleTimer() {
+            clearTimeout(adminIdleTimer);
+            adminIdleTimer = setTimeout(triggerAdminIdleReset, adminIdleMs);
+        }
+
+        function triggerAdminIdleReset() {
+            // If already logged out, do nothing
+            if (document.getElementById('login-overlay').style.display === 'flex' || 
+                document.getElementById('login-overlay').style.display === '') return;
+
+            // Reset forms
+            clearBuildingForm();
+            clearRoomForm();
+            document.getElementById('msg-text').value = '';
+
+            // Close draw maps modal if open
+            if (document.getElementById('map-modal').classList.contains('active')) {
+                closeDrawMap();
+            }
+
+            // Lock the system back to login screen
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('login-error').style.display = 'none';
+
+            alert("Session expired due to inactivity. Log in again.");
+        }
+
+        // Monitor activity to prevent logout during edits
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(evt => {
+            window.addEventListener(evt, resetAdminIdleTimer, true);
+        });
+
+        resetAdminIdleTimer();
     </script>
 </body>
 </html>
