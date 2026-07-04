@@ -1,11 +1,11 @@
-const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:"
-    ? "http://127.0.0.1:8000"
-    : "https://waypoint-rit.onrender.com";
-
 document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
-    // 0. TOAST NOTIFICATIONS & UI HELPERS
+    // 0. API URL DETERMINATION & TOAST SYSTEM
     // ==========================================
+    const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:"
+        ? "http://127.0.0.1:8000"
+        : "https://waypoint-rit.onrender.com";
+
     function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -41,23 +41,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         Object.values(sheets).forEach(sheet => {
             if (sheet) sheet.classList.remove('open');
         });
-
-        if (window.outdoorMap) {
-            window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
-            window.outdoorMap.setFilter('indoor-rooms', ['==', ['get', 'level'], -1]);
-            window.outdoorMap.setFilter('indoor-walls', ['==', ['get', 'level'], -1]);
-            window.outdoorMap.setFilter('indoor-furniture', ['==', ['get', 'level'], -1]);
-            window.outdoorMap.setFilter('indoor-floor-plate', ['==', ['get', 'id'], -1]);
-        }
-        roomMarkersList.forEach(m => m.remove());
-        roomMarkersList = [];
-        activeBuildingId = null;
     }
 
     function openSheet(sheetKey) {
         closeAllSheets();
         const target = sheets[sheetKey];
         if (target) target.classList.add('open');
+        hideDashboard(); // Hide landing overlay when sheet opens
     }
 
     // Connect close buttons
@@ -80,7 +70,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // ==========================================
-    // 2. BOTTOM NAVIGATION MANAGEMENT
+    // 2. DASHBOARD / MAP STATE TOGGLE
+    // ==========================================
+    const dashboard = document.getElementById('home-dashboard');
+    const mapSearch = document.getElementById('map-search-wrapper');
+    const mapControls = document.getElementById('map-floating-controls');
+
+    function showDashboard() {
+        dashboard.classList.remove('hidden');
+        mapSearch.classList.add('hidden');
+        mapControls.classList.add('hidden');
+        closeAllSheets();
+        setNavActive('explore');
+    }
+
+    function hideDashboard() {
+        dashboard.classList.add('hidden');
+        mapSearch.classList.remove('hidden');
+        mapControls.classList.remove('hidden');
+    }
+
+    // Hook grid card events
+    document.getElementById('card-map').onclick = () => {
+        hideDashboard();
+        showToast("Entering 3D Map View", "info");
+    };
+
+    document.getElementById('card-scan').onclick = () => {
+        startScanner();
+    };
+
+    document.getElementById('card-staff').onclick = () => {
+        showToast("Staff Directory: Coming Soon!", "warning");
+    };
+
+    document.getElementById('card-events').onclick = () => {
+        showToast("Campus Events: Coming Soon!", "warning");
+    };
+
+    // Dashboard search input enter key triggers main map search
+    const dashboardSearch = document.getElementById('dashboard-search-bar');
+    dashboardSearch.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const val = dashboardSearch.value;
+            if (val.trim()) {
+                hideDashboard();
+                locateLocation(val);
+                dashboardSearch.value = '';
+            }
+        }
+    });
+
+    // ==========================================
+    // 3. BOTTOM NAVIGATION MANAGEMENT
     // ==========================================
     const navButtons = {
         explore: document.getElementById('nav-btn-explore'),
@@ -103,8 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     navButtons.explore.onclick = () => {
-        closeAllSheets();
-        setNavActive('explore');
+        showDashboard();
     };
 
     navButtons.updates.onclick = () => {
@@ -125,19 +167,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     // ==========================================
-    // 3. MAP INITIALIZATION & CAMERA SETTINGS
+    // 4. MAP INITIALIZATION & CAMERA SETTINGS
     // ==========================================
-    mapboxgl.accessToken = 'pk.eyJ1IjoibGVlbGFrcmlzaG5hOTEiLCJhIjoiY21ubGRyd3Y0MTE0dDJvcXVtcTVtZmpsdSJ9' + '.' + '82mSmhy8H3hZ-x-wCsCtzw';
+    mapboxgl.accessToken = 'pk.eyJ1IjoibGVlbGFrcmlzaG5hOTEiLCJhIjoiY21ubGRyd3Y0MTE0dDJvcXVtcTVtZmpsdSJ9.' + '82mSmhy8H3hZ-x-wCsCtzw';
     const ritCenter = [80.0447, 13.0390];
     const ritBounds = [
         [80.036, 13.034],
         [80.053, 13.045]
     ];
 
-    let currentTheme = 'dark';
+    let currentTheme = 'light'; // Light theme is default from mockup
     window.outdoorMap = new mapboxgl.Map({
         container: 'map-container',
-        style: 'mapbox://styles/mapbox/dark-v11',
+        style: 'mapbox://styles/mapbox/light-v11', // default light map matching mockup
         center: ritCenter,
         zoom: 17.2,
         minZoom: 16.0,
@@ -152,11 +194,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     let activeBuildingId = null;
     let is3D = true;
     let markersList = [];
-    let roomMarkersList = []; // Track indoor room label markers
+    let roomMarkersList = [];
+    let activeSearchRoomId = "";
     let buildingsData = [];
 
     // ==========================================
-    // 4. MAP GEOLOCATION ACCURACY (GPS TRACKER)
+    // 5. MAP GEOLOCATION ACCURACY (GPS TRACKER)
     // ==========================================
     let userLocationMarker = null;
     let watchId = null;
@@ -167,7 +210,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function toggleLocationTracking() {
         if (isTrackingLocation) {
-            // Stop tracking
             if (watchId !== null) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
@@ -177,23 +219,23 @@ document.addEventListener("DOMContentLoaded", async () => {
                 userLocationMarker = null;
             }
             isTrackingLocation = false;
-            locateBtn.style.color = 'var(--text-secondary)';
+            locateBtn.style.backgroundColor = '';
+            locateBtn.style.color = '';
             showToast("Location tracking paused.", "info");
         } else {
-            // Start tracking
             if (!navigator.geolocation) {
                 showToast("Geolocation is not supported by your device.", "error");
                 return;
             }
 
-            locateBtn.style.color = 'var(--accent-blue)';
+            locateBtn.style.backgroundColor = 'var(--color-navy)';
+            locateBtn.style.color = 'var(--color-white)';
             showToast("Locating your device...", "info");
 
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     
-                    // RIT campus limits rough verification
                     const inLatitude = latitude > 13.033 && latitude < 13.047;
                     const inLongitude = longitude > 80.035 && longitude < 80.055;
 
@@ -219,12 +261,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                     }
 
                     isTrackingLocation = true;
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().catch(err => console.warn("Kiosk fullscreen restore failed:", err));
+                    }
                 },
                 (error) => {
                     console.error("GPS Error: ", error);
                     showToast("Failed to acquire GPS coordinates.", "error");
-                    locateBtn.style.color = 'var(--text-secondary)';
+                    locateBtn.style.backgroundColor = '';
+                    locateBtn.style.color = '';
                     isTrackingLocation = false;
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().catch(err => console.warn("Kiosk fullscreen restore failed:", err));
+                    }
                 },
                 { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
             );
@@ -232,7 +281,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // ==========================================
-    // 5. 3D X-RAY DATA ENGINE
+    // 6. 3D X-RAY DATA ENGINE
     // ==========================================
     async function renderCustomLayers() {
         markersList.forEach(m => m.remove());
@@ -264,7 +313,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
-        const maskColor = currentTheme === 'dark' ? '#030712' : '#f8fafc';
+        const maskColor = currentTheme === 'dark' ? '#111318' : '#F4F7FA';
         window.outdoorMap.addLayer({
             'id': 'world-mask-layer',
             'type': 'fill',
@@ -310,7 +359,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 'data': finishedWall
             });
 
-            const wallColor = currentTheme === 'dark' ? '#1e293b' : '#cbd5e1';
+            const wallColor = currentTheme === 'dark' ? '#1E293B' : '#E2E8F0';
             const showWall = document.getElementById('boundary-toggle').checked;
             const isVisible = showWall ? 'visible' : 'none';
 
@@ -339,7 +388,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         // Shell Layer
-        const shellColor = currentTheme === 'dark' ? '#1e293b' : ['get', 'color'];
+        const shellColor = currentTheme === 'dark' ? '#1E293B' : ['get', 'color'];
         window.outdoorMap.addLayer({
             'id': 'building-shells',
             'type': 'fill-extrusion',
@@ -357,20 +406,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
-        // LAYER 1.5: Indoor Floor Plate (to support indoor rooms/furniture)
-        window.outdoorMap.addLayer({
-            'id': 'indoor-floor-plate',
-            'type': 'fill-extrusion',
-            'source': 'custom-campus',
-            'filter': ['all', ['==', ['get', 'type'], 'building'], ['==', ['get', 'id'], -1]],
-            'paint': {
-                'fill-extrusion-color': currentTheme === 'dark' ? '#1e293b' : '#f1f5f9',
-                'fill-extrusion-base': 0,
-                'fill-extrusion-height': 0.1,
-                'fill-extrusion-opacity': 0.95
-            }
-        });
-
+        // Rooms Layer
         window.outdoorMap.addLayer({
             'id': 'indoor-rooms',
             'type': 'fill-extrusion',
@@ -411,26 +447,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
-        // LAYER 3: Indoor Furniture (Hidden by default)
-        window.outdoorMap.addLayer({
-            'id': 'indoor-furniture',
-            'type': 'fill-extrusion',
-            'source': 'custom-campus',
-            'filter': ['all', ['==', ['get', 'type'], 'furniture'], ['==', ['get', 'level'], -1]],
-            'paint': {
-                'fill-extrusion-color': [
-                    'match',
-                    ['get', 'sub_type'],
-                    'table', '#b45309', // wood brown
-                    'chair', '#475569', // slate grey
-                    '#64748b' // default
-                ],
-                'fill-extrusion-base': ['get', 'base_h'],
-                'fill-extrusion-height': ['get', 'ceil_h'],
-                'fill-extrusion-opacity': 0.95
-            }
-        });
-
         await refreshCampusData();
 
         const splash = document.getElementById('splash-screen');
@@ -440,24 +456,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.outdoorMap.on('style.load', renderCustomLayers);
 
     // Dynamic Database Fetching
-    function makeRect(cx, cy, w, h) {
-        const dx = (w / 2) * 9.2e-6;
-        const dy = (h / 2) * 9.0e-6;
-        return [
-            [
-                [cx - dx, cy - dy],
-                [cx + dx, cy - dy],
-                [cx + dx, cy + dy],
-                [cx - dx, cy + dy],
-                [cx - dx, cy - dy]
-            ]
-        ];
-    }
-
-    function generateFurnitureForRoom(r, coords, base_h) {
-        return [];
-    }
-
     async function refreshCampusData() {
         try {
             const bRes = await fetch(`${API_URL}/admin/buildings`);
@@ -482,12 +480,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                         'geometry': { 'type': 'Polygon', 'coordinates': coords }
                     });
 
+                    // Add Custom POI Markers matching mockup look
                     if (b.entrance_x && b.entrance_y) {
                         const el = document.createElement('div');
                         el.className = 'poi-marker';
                         
-                        const bColor = b.color || '#38bdf8';
-                        el.innerHTML = `<i class="fa-solid ${b.icon || 'fa-building'}" style="background: transparent; color: ${bColor}; border-color: ${bColor}; box-shadow: 0 0 10px ${bColor}40; --building-color: ${bColor};"></i><br><span>${b.name}</span>`;
+                        const bColor = b.color || '#0B2545';
+                        el.innerHTML = `<i class="fa-solid ${b.icon || 'fa-building'}" style="background: var(--color-white); color: ${bColor}; border-color: ${bColor}; box-shadow: 0 4px 12px rgba(11, 37, 69, 0.1);"></i><br><span style="font-weight: 700;">${b.name}</span>`;
 
                         el.addEventListener('click', (ev) => {
                             ev.stopPropagation();
@@ -504,6 +503,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             });
 
+            // Rooms fetching
             try {
                 const rRes = await fetch(`${API_URL}/admin/rooms`);
                 if (rRes.ok) {
@@ -512,25 +512,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                         if (!r.footprint_coordinates) return;
 
                         try {
-                            let rawCoords = r.footprint_coordinates.trim();
-                            if (rawCoords.endsWith(',')) {
-                                rawCoords = rawCoords.slice(0, -1);
-                            }
-                            let coords = JSON.parse(rawCoords);
+                            let coords = JSON.parse(r.footprint_coordinates);
                             if (coords.length > 0 && typeof coords[0][0] === 'number') {
                                 coords = [coords];
                             }
-
-                            // Ensure coordinates are closed
-                            coords = coords.map(ring => {
-                                if (ring.length < 3) return ring;
-                                const first = ring[0];
-                                const last = ring[ring.length - 1];
-                                if (first[0] !== last[0] || first[1] !== last[1]) {
-                                    return [...ring, [first[0], first[1]]];
-                                }
-                                return ring;
-                            });
 
                             const base_h = r.floor_level * 4;
                             const z_thick = r.z_coordinate !== null ? parseFloat(r.z_coordinate) : 3.5;
@@ -573,10 +558,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                             } catch (wallErr) {
                                 console.error("Failed to generate wall for room: ", wallErr);
                             }
-
-                            // Generate and push 3D Furniture features
-                            const furn = generateFurnitureForRoom(r, coords, base_h);
-                            features.push(...furn);
                         } catch (err) {
                             console.error("Failed loading room coordinates: ", err);
                         }
@@ -593,12 +574,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // ==========================================
-    // 6. BUILDING SELECTION & BOTTOM SHEET POPULATION
+    // 7. BUILDING SELECTION & BOTTOM SHEET POPULATION
     // ==========================================
     window.outdoorMap.on('click', 'building-shells', (e) => {
         const props = e.features[0].properties;
-        const bId = props.id !== undefined ? props.id : e.features[0].id;
-        const b = buildingsData.find(item => item.building_id === parseInt(bId));
+        const b = buildingsData.find(item => item.building_id === props.id);
         if (b) {
             selectBuilding(b);
         }
@@ -607,6 +587,116 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.outdoorMap.on('mouseenter', 'building-shells', () => window.outdoorMap.getCanvas().style.cursor = 'pointer');
     window.outdoorMap.on('mouseleave', 'building-shells', () => window.outdoorMap.getCanvas().style.cursor = '');
 
+    function selectBuilding(b) {
+        activeBuildingId = b.building_id;
+        
+        window.outdoorMap.flyTo({
+            center: [b.entrance_y, b.entrance_x],
+            zoom: 19.2,
+            pitch: 62,
+            duration: 1500
+        });
+
+        // Set Details in Bottom Sheet
+        document.getElementById('sheet-building-title').innerText = b.name;
+        document.getElementById('sheet-building-subtitle').innerText = `Campus Block - ${b.total_floors} Stories`;
+        document.getElementById('sheet-floors-count').innerText = b.total_floors;
+
+        // Build Horizontal Floor buttons
+        const floorContainer = document.getElementById('floor-list-mobile');
+        floorContainer.innerHTML = '';
+
+        for (let i = b.total_floors - 1; i >= 0; i--) {
+            const btn = document.createElement('button');
+            btn.className = 'floor-pill-btn';
+            btn.innerText = i === 0 ? 'G' : i;
+            if (i === 0) btn.classList.add('active');
+
+            btn.onclick = () => {
+                document.querySelectorAll('.floor-pill-btn').forEach(x => x.classList.remove('active'));
+                btn.classList.add('active');
+
+                 window.outdoorMap.setFilter('indoor-rooms', [
+                    'all',
+                    ['==', ['get', 'type'], 'room'],
+                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
+                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
+                ]);
+
+                window.outdoorMap.setFilter('indoor-walls', [
+                    'all',
+                    ['==', ['get', 'type'], 'room-wall'],
+                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
+                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
+                ]);
+
+                // Filter dynamic room list on the bottom sheet
+                fetchRoomsForBuildingAndLevel(b.building_id, i);
+
+                // Render room label markers
+                renderRoomLabels(activeBuildingId, i);
+            };
+
+            floorContainer.appendChild(btn);
+        }
+
+        // Build vertical floating floor buttons widget matching mockup
+        const verticalWidgetGroup = document.getElementById('floor-btn-group');
+        verticalWidgetGroup.innerHTML = '';
+        
+        for (let i = 0; i < b.total_floors; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'floor-btn';
+            btn.innerText = i === 0 ? 'G' : i;
+            if (i === 0) btn.classList.add('active');
+            
+            btn.onclick = () => {
+                document.querySelectorAll('.floor-btn-group .floor-btn').forEach(x => x.classList.remove('active'));
+                btn.classList.add('active');
+                
+                 window.outdoorMap.setFilter('indoor-rooms', [
+                    'all',
+                    ['==', ['get', 'type'], 'room'],
+                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
+                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
+                ]);
+
+                window.outdoorMap.setFilter('indoor-walls', [
+                    'all',
+                    ['==', ['get', 'type'], 'room-wall'],
+                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
+                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
+                ]);
+                
+                // Keep bottom sheet horizontal slider in sync
+                document.querySelectorAll('.floor-pill-btn').forEach(pill => {
+                    if (pill.innerText === btn.innerText) {
+                        pill.classList.add('active');
+                    } else {
+                        pill.classList.remove('active');
+                    }
+                });
+                
+                fetchRoomsForBuildingAndLevel(b.building_id, i);
+
+                // Render room label markers
+                renderRoomLabels(activeBuildingId, i);
+            };
+            verticalWidgetGroup.prepend(btn); // Stack G at the bottom
+        }
+
+        // Click first floor button (usually Ground)
+        if (floorContainer.lastChild) {
+            floorContainer.lastChild.click();
+        }
+
+        // Show widget controls
+        document.getElementById('floor-widget-container').style.display = 'flex';
+
+        // Slide up Building Info Bottom Sheet
+        openSheet('building');
+        setNavActive('explore');
+    }
     async function renderRoomLabels(buildingId, floorLevel) {
         roomMarkersList.forEach(m => m.remove());
         roomMarkersList = [];
@@ -653,95 +743,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.error("Failed to render room labels", e);
         }
     }
-
-    function selectBuilding(b) {
-        activeBuildingId = parseInt(b.building_id);
-        
-        window.outdoorMap.flyTo({
-            center: [b.entrance_y, b.entrance_x],
-            zoom: 19.2,
-            pitch: 62,
-            duration: 1500
-        });
-
-        // Hide active building shell to see inside (X-ray mode)
-        window.outdoorMap.setFilter('building-shells', [
-            'all',
-            ['==', ['get', 'type'], 'building'],
-            ['!=', ['to-number', ['get', 'id']], activeBuildingId]
-        ]);
-
-        // Set Details in Bottom Sheet
-        document.getElementById('sheet-building-title').innerText = b.name;
-        document.getElementById('sheet-building-subtitle').innerText = `Campus Block - ${b.total_floors} Stories`;
-        document.getElementById('sheet-floors-count').innerText = b.total_floors;
-
-        // Build Horizontal Floor buttons
-        const floorContainer = document.getElementById('floor-list-mobile');
-        floorContainer.innerHTML = '';
-
-        for (let i = b.total_floors - 1; i >= 0; i--) {
-            const btn = document.createElement('button');
-            btn.className = 'floor-pill-btn';
-            btn.innerText = i === 0 ? 'G' : i;
-            if (i === 0) btn.classList.add('active');
-
-            btn.onclick = () => {
-                document.querySelectorAll('.floor-pill-btn').forEach(x => x.classList.remove('active'));
-                btn.classList.add('active');
-
-                window.outdoorMap.setFilter('indoor-rooms', [
-                    'all',
-                    ['==', ['get', 'type'], 'room'],
-                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
-                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
-                ]);
-
-                window.outdoorMap.setFilter('indoor-furniture', [
-                    'all',
-                    ['==', ['get', 'type'], 'furniture'],
-                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
-                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
-                ]);
-
-                window.outdoorMap.setFilter('indoor-walls', [
-                    'all',
-                    ['==', ['get', 'type'], 'room-wall'],
-                    ['==', ['to-number', ['get', 'level']], parseInt(i)],
-                    ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
-                ]);
-
-                window.outdoorMap.setFilter('indoor-floor-plate', [
-                    'all',
-                    ['==', ['get', 'type'], 'building'],
-                    ['==', ['to-number', ['get', 'id']], parseInt(activeBuildingId)]
-                ]);
-                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', i * 4);
-                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', i * 4 + 0.05);
-
-                // Filter dynamic room list on the bottom sheet
-                fetchRoomsForBuildingAndLevel(b.building_id, i);
-
-                // Render detail room labels
-                renderRoomLabels(activeBuildingId, i);
-            };
-
-            floorContainer.appendChild(btn);
-        }
-
-        // Click first floor button (usually Ground)
-        if (floorContainer.lastChild) {
-            floorContainer.lastChild.click();
-        }
-
-        // Slide up Building Info Bottom Sheet
-        openSheet('building');
-        setNavActive('explore');
-    }
-
     async function fetchRoomsForBuildingAndLevel(buildingId, floorLevel) {
         const listDiv = document.getElementById('building-rooms-list');
-        listDiv.innerHTML = '<p style="font-size: 0.8rem; color: #94a3b8;">Loading rooms...</p>';
+        listDiv.innerHTML = '<p style="font-size: 0.8rem; color: var(--color-text-muted);">Loading rooms...</p>';
 
         try {
             const res = await fetch(`${API_URL}/admin/rooms`);
@@ -751,14 +755,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                 
                 listDiv.innerHTML = '';
                 if (filtered.length === 0) {
-                    listDiv.innerHTML = '<p style="font-size: 0.8rem; color: #64748b; font-style: italic;">No rooms listed on this floor.</p>';
+                    listDiv.innerHTML = '<p style="font-size: 0.8rem; color: var(--color-text-muted); font-style: italic;">No rooms listed on this floor.</p>';
                     return;
                 }
 
                 filtered.forEach(r => {
                     const item = document.createElement('div');
                     item.className = 'mobile-list-item';
-                    item.innerHTML = `<i class="fa-solid fa-door-open" style="color: var(--accent-blue); margin-right: 8px;"></i> <strong>${r.room_id}</strong> - ${r.room_type || 'General Room'}`;
+                    item.innerHTML = `<i class="fa-solid fa-door-open" style="color: var(--color-mint); margin-right: 8px;"></i> <strong>${r.room_id}</strong> - ${r.room_type || 'General Room'}`;
                     item.onclick = () => {
                         closeAllSheets();
                         locateLocation(r.room_id);
@@ -767,12 +771,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 });
             }
         } catch (e) {
-            listDiv.innerHTML = '<p style="font-size: 0.8rem; color: var(--accent-red);">Failed to retrieve room details.</p>';
+            listDiv.innerHTML = '<p style="font-size: 0.8rem; color: var(--color-text-dark);">Failed to retrieve room details.</p>';
         }
     }
 
     // ==========================================
-    // 7. DIRECTORY ACCORDIONS IN MOBILE MENU
+    // 8. DIRECTORY ACCORDIONS IN MOBILE MENU
     // ==========================================
     const accHeaders = {
         blocks: document.getElementById('acc-blocks'),
@@ -786,7 +790,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const parent = header.parentElement;
                 parent.classList.toggle('active');
 
-                // Close other accordion panels
+                // Close other panels
                 Object.keys(accHeaders).forEach(otherKey => {
                     if (otherKey !== key) {
                         accHeaders[otherKey].parentElement.classList.remove('active');
@@ -809,7 +813,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     const div = document.createElement('div');
                     div.className = 'mobile-list-item';
                     div.style.marginBottom = '6px';
-                    div.innerHTML = `<i class="fa-solid ${b.icon || 'fa-building'}" style="color: var(--accent-blue); margin-right: 8px;"></i> ${b.name}`;
+                    div.innerHTML = `<i class="fa-solid ${b.icon || 'fa-building'}" style="color: var(--color-navy); margin-right: 8px;"></i> ${b.name}`;
                     div.onclick = () => {
                         closeAllSheets();
                         selectBuilding(b);
@@ -825,12 +829,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const roomsList = document.getElementById('mobile-rooms-directory');
                 roomsList.innerHTML = '';
 
-                // List first 20 rooms for quick access
                 rooms.slice(0, 20).forEach(r => {
                     const div = document.createElement('div');
                     div.className = 'mobile-list-item';
-                    div.style.style = 'margin-bottom: 6px;';
-                    div.innerHTML = `<i class="fa-solid fa-door-open" style="color: var(--accent-blue); margin-right: 8px;"></i> ${r.room_id} (${r.building_name})`;
+                    div.style.marginBottom = '6px';
+                    div.innerHTML = `<i class="fa-solid fa-door-open" style="color: var(--color-navy); margin-right: 8px;"></i> ${r.room_id} (${r.building_name})`;
                     div.onclick = () => {
                         closeAllSheets();
                         locateLocation(r.room_id);
@@ -839,12 +842,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 });
 
                 if (rooms.length > 20) {
-                    const extra = document.createElement('div');
-                    extra.className = 'mobile-list-item';
-                    extra.style.color = 'var(--text-secondary)';
-                    extra.style.fontStyle = 'italic';
-                    extra.innerText = `...and ${rooms.length - 20} more. Use search.`;
-                    roomsList.appendChild(extra);
+                     const extra = document.createElement('div');
+                     extra.className = 'mobile-list-item';
+                     extra.style.color = 'var(--color-text-muted)';
+                     extra.style.fontStyle = 'italic';
+                     extra.innerText = `...and ${rooms.length - 20} more. Use search.`;
+                     roomsList.appendChild(extra);
                 }
             }
         } catch (e) {
@@ -853,7 +856,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // ==========================================
-    // 8. LIVE UPDATES DRAWER POPULATION
+    // 9. LIVE UPDATES DRAWER POPULATION
     // ==========================================
     async function fetchAnnouncements() {
         const list = document.getElementById('mobile-announcements-list');
@@ -863,24 +866,23 @@ document.addEventListener("DOMContentLoaded", async () => {
             list.innerHTML = '';
 
             if (messages.length === 0) {
-                list.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; padding: 20px 0;">No new updates from the administration.</p>';
+                list.innerHTML = '<p style="text-align: center; color: var(--color-text-muted); font-size: 0.85rem; padding: 20px 0;">No new updates from the administration.</p>';
                 return;
             }
 
             messages.forEach(m => {
                 const card = document.createElement('div');
                 card.className = `mobile-announcement-card ${m.type}`;
-                card.style.marginBottom = '10px';
-                card.innerHTML = `<i class="fa-solid fa-circle-info" style="margin-right: 6px;"></i> ${m.message}`;
+                card.innerHTML = `<i class="fa-solid fa-circle-info" style="margin-right: 8px; color: var(--color-mint);"></i> ${m.message}`;
                 list.appendChild(card);
             });
         } catch (e) {
-            list.innerHTML = '<p style="text-align: center; color: var(--accent-red); font-size: 0.85rem; padding: 20px 0;">Could not connect to backend announcements.</p>';
+            list.innerHTML = '<p style="text-align: center; color: var(--color-text-muted); font-size: 0.85rem; padding: 20px 0;">Could not connect to backend announcements.</p>';
         }
     }
 
     // ==========================================
-    // 9. MAP TOOLS & CONTROLS INTERACTIVE LOGIC
+    // 10. MAP TOOLS & CONTROLS INTERACTIVE LOGIC
     // ==========================================
     const compassBtn = document.getElementById('compass-btn');
     const compassIcon = compassBtn.querySelector('i');
@@ -896,7 +898,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('toggle-3d-btn').onclick = (e) => {
         is3D = !is3D;
         window.outdoorMap.easeTo({ pitch: is3D ? 55 : 0 });
-        e.target.style.color = is3D ? 'var(--text-secondary)' : 'var(--accent-blue)';
+        e.target.style.backgroundColor = is3D ? '' : 'var(--color-navy)';
+        e.target.style.color = is3D ? '' : 'var(--color-white)';
     };
 
     // Toggle Toggles logic
@@ -919,7 +922,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // ==========================================
-    // 10. SMART SEARCH ACTION FOR MOBILE
+    // 11. SMART SEARCH ACTION FOR MOBILE
     // ==========================================
     const searchBar = document.getElementById('search-bar');
     let currentSearchMarker = null;
@@ -945,33 +948,36 @@ document.addEventListener("DOMContentLoaded", async () => {
                 duration: 2000
             });
 
-            // Set dynamic active room highlight
-            if (data.type === 'room') {
-                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-color', [
-                    'case',
-                    ['==', ['get', 'id'], data.id], '#fbbf24',
-                    [
-                        'coalesce',
-                        ['get', 'color'],
-                        [
-                            'match',
-                            ['get', 'room_type'],
-                            'Classroom', '#f97316',
-                            'Meeting', '#22c55e',
-                            'Office', '#3b82f6',
-                            'Facility', '#64748b',
-                            'Restroom', '#64748b',
-                            currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
-                        ]
-                    ]
-                ]);
-            }
+            // Set active highlighted color to mockup mint green
+             if (data.type === 'room') {
+                 activeSearchRoomId = data.id;
+                 window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-color', [
+                     'case',
+                     ['==', ['get', 'id'], data.id], '#00C896', // Mint highlighted matching mockup
+                     [
+                         'coalesce',
+                         ['get', 'color'],
+                         [
+                             'match',
+                             ['get', 'room_type'],
+                             'Classroom', '#f97316',
+                             'Meeting', '#22c55e',
+                             'Office', '#3b82f6',
+                             'Facility', '#64748b',
+                             'Restroom', '#64748b',
+                             currentTheme === 'dark' ? '#0f172a' : '#e0e7ff'
+                         ]
+                     ]
+                 ]);
+             } else {
+                 activeSearchRoomId = "";
+             }
 
             const title = data.type === 'room' ? data.id : data.building_name;
             const popupHTML = `
                 <div style="padding: 2px;">
-                    <strong style="color: var(--accent-blue); font-size: 0.95rem;">${title}</strong><br>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">
+                    <strong style="color: var(--color-navy); font-size: 0.95rem;">${title}</strong><br>
+                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">
                         ${data.type === 'room' ? 'Inside: ' + data.building_name : 'Campus Block'}
                     </span>
                 </div>
@@ -990,13 +996,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Automatically select building & floor if a room was searched
             if (data.building_id) {
-                const b = buildingsData.find(item => item.building_id === parseInt(data.building_id));
+                const b = buildingsData.find(item => item.building_id === data.building_id);
                 if (b) {
                     selectBuilding(b);
                     if (data.type === 'room' && data.floor_level !== undefined) {
                         setTimeout(() => {
                             const targetText = data.floor_level === 0 ? 'G' : data.floor_level.toString();
                             document.querySelectorAll('.floor-pill-btn').forEach(btn => {
+                                if (btn.innerText === targetText) {
+                                    btn.click();
+                                }
+                            });
+                            // Keep vertical widget synchronized
+                            document.querySelectorAll('.floor-btn-group .floor-btn').forEach(btn => {
                                 if (btn.innerText === targetText) {
                                     btn.click();
                                 }
@@ -1009,14 +1021,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             searchBar.value = '';
             searchBar.placeholder = "Search rooms, blocks, facilities...";
             showToast(`Found: ${title}`, "info");
-
-            // Show Confirmation Dialog instead of routing panel directly
-            const confirmDialog = document.getElementById('nav-confirm-dialog');
-            const targetNameSpan = document.getElementById('confirm-target-name');
-            if (confirmDialog && targetNameSpan) {
-                targetNameSpan.innerText = title;
-                confirmDialog.style.display = 'flex';
-            }
 
         } catch (e) {
             console.error("Search locating error: ", e);
@@ -1034,7 +1038,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // ==========================================
-    // 11. MOBILE QR CAMERA CODE SCANNER
+    // 12. MOBILE QR CAMERA CODE SCANNER
     // ==========================================
     const scannerOverlay = document.getElementById('mobile-scanner');
     const exitScannerBtn = document.getElementById('exit-scanner-btn');
@@ -1042,7 +1046,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const video = document.getElementById('scanner-video');
     const canvasElement = document.getElementById('scanner-canvas');
     const canvas = canvasElement.getContext('2d');
-    const hudStatus = document.getElementById('scanner-hud-status');
     let scanStream = null;
     let scanning = false;
 
@@ -1051,7 +1054,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function startScanner() {
         scannerOverlay.style.display = 'flex';
-        hudStatus.innerText = "Requesting device camera access...";
         
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
             scanStream = stream;
@@ -1060,11 +1062,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             video.play();
             scanning = true;
             requestAnimationFrame(tickScanner);
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.warn("Kiosk fullscreen restore failed:", err));
+            }
         }).catch(err => {
             console.error("Camera fail: ", err);
-            hudStatus.innerText = "Camera access error: " + err.message;
             showToast("Camera access refused or unavailable.", "error");
             setTimeout(stopScanner, 2000);
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.warn("Kiosk fullscreen restore failed:", err));
+            }
         });
     }
 
@@ -1082,7 +1089,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!scanning) return;
 
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            hudStatus.innerText = "Scanning for QR Code...";
             canvasElement.height = video.videoHeight;
             canvasElement.width = video.videoWidth;
             canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
@@ -1094,207 +1100,94 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             if (code && code.data) {
                 stopScanner();
+                hideDashboard(); // Hide dashboard when scanned location is found
                 locateLocation(code.data);
                 return;
             }
         }
         requestAnimationFrame(tickScanner);
     }
+
     // ==========================================
-    // 12. ROUTING PANEL LOGIC FOR MOBILE
+    // 13. KIOSK MODE CONTROLLER
     // ==========================================
-    const closeRouteBtn = document.getElementById('close-route-btn');
-    const swapRouteBtn = document.getElementById('swap-route-btn');
-    const startNavBtn = document.getElementById('start-nav-btn');
-    const routeFrom = document.getElementById('route-from');
-    const routeTo = document.getElementById('route-to');
-
-    function drawRouteOnMap(coordinates) {
-        const routeSourceId = 'nav-route-source';
-        const routeLayerId = 'nav-route-layer';
-        const routeGlowLayerId = 'nav-route-glow-layer';
-
-        const geojson = {
-            'type': 'Feature',
-            'properties': {},
-            'geometry': {
-                'type': 'LineString',
-                'coordinates': coordinates
-            }
-        };
-
-        if (window.outdoorMap.getSource(routeSourceId)) {
-            window.outdoorMap.getSource(routeSourceId).setData(geojson);
-        } else {
-            window.outdoorMap.addSource(routeSourceId, {
-                'type': 'geojson',
-                'data': geojson
-            });
-
-            window.outdoorMap.addLayer({
-                'id': routeGlowLayerId,
-                'type': 'line',
-                'source': routeSourceId,
-                'layout': {
-                    'line-join': 'round',
-                    'line-cap': 'round'
-                },
-                'paint': {
-                    'line-color': '#06b6d4',
-                    'line-width': 8,
-                    'line-opacity': 0.4
-                }
-            });
-
-            window.outdoorMap.addLayer({
-                'id': routeLayerId,
-                'type': 'line',
-                'source': routeSourceId,
-                'layout': {
-                    'line-join': 'round',
-                    'line-cap': 'round'
-                },
-                'paint': {
-                    'line-color': '#22d3ee',
-                    'line-width': 4
-                }
+    
+    // 13.1. Automatic Fullscreen on First User Interaction (bypasses browser gesture blocks)
+    function enterFullscreenOnGesture() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.warn("Automatic fullscreen failed or blocked:", err);
             });
         }
+        // Remove the one-time listeners
+        document.removeEventListener('click', enterFullscreenOnGesture);
+        document.removeEventListener('touchstart', enterFullscreenOnGesture);
+    }
+    document.addEventListener('click', enterFullscreenOnGesture);
+    document.addEventListener('touchstart', enterFullscreenOnGesture);
 
-        const bounds = new mapboxgl.LngLatBounds();
-        coordinates.forEach(coord => bounds.extend(coord));
-        window.outdoorMap.fitBounds(bounds, {
-            padding: 50,
-            maxZoom: 19,
+
+    // 13.2. Disable context menu / right click to escape
+    window.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
+
+    // 13.3. Idle Inactivity Reset Timer (60 Seconds)
+    let idleTimer = null;
+    const idleTimeoutMs = 60000; // 60 seconds
+
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(triggerIdleReset, idleTimeoutMs);
+    }
+
+    function triggerIdleReset() {
+        showToast("Session idle. Resetting to home screen.", "info");
+
+        // 1. Close scanner if running
+        stopScanner();
+
+        // 2. Hide map elements and return to home landing overlay
+        showDashboard();
+
+        // 3. Clear Mapbox search markers and popups
+        if (currentSearchMarker) {
+            currentSearchMarker.remove();
+            currentSearchMarker = null;
+        }
+
+        // 4. Reset Mapbox Camera to starting position
+        window.outdoorMap.flyTo({
+            center: ritCenter,
+            zoom: 17.2,
+            pitch: 55,
+            bearing: -20,
             duration: 1500
         });
-    }
 
-    function clearRouteFromMap() {
-        const routeSourceId = 'nav-route-source';
-        const routeLayerId = 'nav-route-layer';
-        const routeGlowLayerId = 'nav-route-glow-layer';
+        // 5. Clear all active building filter layers
+        window.outdoorMap.setFilter('indoor-rooms', ['==', ['get', 'level'], -1]);
+        window.outdoorMap.setFilter('indoor-walls', ['==', ['get', 'level'], -1]);
+        window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
+        
+        // Clear room tags
+        roomMarkersList.forEach(m => m.remove());
+        roomMarkersList = [];
+        
+        // Hide floor controls
+        document.getElementById('floor-widget-container').style.display = 'none';
 
-        if (window.outdoorMap.getLayer(routeLayerId)) window.outdoorMap.removeLayer(routeLayerId);
-        if (window.outdoorMap.getLayer(routeGlowLayerId)) window.outdoorMap.removeLayer(routeGlowLayerId);
-        if (window.outdoorMap.getSource(routeSourceId)) window.outdoorMap.removeSource(routeSourceId);
-    }
-
-    async function calculateAndDisplayRoute() {
-        const fromVal = routeFrom.value.trim();
-        const toVal = routeTo.value.trim();
-
-        if (!fromVal || !toVal) {
-            showToast("Please enter both start and destination locations.", "warning");
-            return;
-        }
-
-        let startQuery = fromVal;
-        let endQuery = toVal;
-
-        if (fromVal.toLowerCase() === "my location") {
-            if (navigator.geolocation) {
-                showToast("Fetching your current location...", "info");
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const { latitude, longitude } = position.coords;
-                        startQuery = `${latitude},${longitude}`;
-                        await fetchAndDraw(startQuery, endQuery);
-                    },
-                    (error) => {
-                        console.error("GPS retrieval failed", error);
-                        showToast("Could not retrieve GPS location. Using default gate.", "warning");
-                        startQuery = "13.037528246529249,80.04520562488239";
-                        fetchAndDraw(startQuery, endQuery);
-                    },
-                    { enableHighAccuracy: true, timeout: 5000 }
-                );
-            } else {
-                showToast("GPS is not supported. Using default gate.", "warning");
-                startQuery = "13.037528246529249,80.04520562488239";
-                await fetchAndDraw(startQuery, endQuery);
-            }
-        } else {
-            await fetchAndDraw(startQuery, endQuery);
+        // 6. Stop GPS Geolocation Tracking if active
+        if (isTrackingLocation) {
+            toggleLocationTracking();
         }
     }
 
-    async function fetchAndDraw(start, end) {
-        try {
-            const response = await fetch(`${API_URL}/route?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.detail || "Route not found");
-            }
+    // Monitor all user interaction events to keep active state
+    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(evt => {
+        window.addEventListener(evt, resetIdleTimer, true);
+    });
 
-            const routeData = await response.json();
-            if (routeData.path && routeData.path.length > 0) {
-                drawRouteOnMap(routeData.path);
-                showToast("Route loaded successfully!", "success");
-                
-                if (routeData.instructions && routeData.instructions.length > 0) {
-                    setTimeout(() => {
-                        showToast(routeData.instructions[0], "info");
-                    }, 1000);
-                    if (routeData.instructions.length > 1) {
-                        setTimeout(() => {
-                            showToast(routeData.instructions[routeData.instructions.length - 1], "info");
-                        }, 2500);
-                    }
-                }
-            } else {
-                showToast("Could not calculate a path. Locations might be disconnected.", "error");
-            }
-        } catch (e) {
-            console.error("Pathfinding error", e);
-            showToast(e.message || "Failed to fetch routing details.", "error");
-        }
-    }
-
-    if (closeRouteBtn) {
-        closeRouteBtn.addEventListener('click', () => {
-            document.getElementById('routing-panel').style.display = 'none';
-            document.getElementById('main-search-box').style.display = 'block';
-            clearRouteFromMap();
-        });
-    }
-
-    if (swapRouteBtn) {
-        swapRouteBtn.addEventListener('click', () => {
-            const temp = routeFrom.value;
-            routeFrom.value = routeTo.value;
-            routeTo.value = temp;
-        });
-    }
-
-    if (startNavBtn) {
-        startNavBtn.addEventListener('click', calculateAndDisplayRoute);
-    }
-
-    // Confirmation Dialog Button Listeners
-    const confirmYesBtn = document.getElementById('confirm-yes-btn');
-    const confirmNoBtn = document.getElementById('confirm-no-btn');
-    const navConfirmDialog = document.getElementById('nav-confirm-dialog');
-    const mainSearchBox = document.getElementById('main-search-box');
-    const routingPanel = document.getElementById('routing-panel');
-
-    if (confirmYesBtn) {
-        confirmYesBtn.addEventListener('click', () => {
-            if (navConfirmDialog) navConfirmDialog.style.display = 'none';
-            if (mainSearchBox) mainSearchBox.style.display = 'none';
-            if (routingPanel) {
-                routingPanel.style.display = 'flex';
-                const targetNameSpan = document.getElementById('confirm-target-name');
-                if (routeTo && targetNameSpan) {
-                    routeTo.value = targetNameSpan.innerText;
-                }
-            }
-        });
-    }
-
-    if (confirmNoBtn) {
-        confirmNoBtn.addEventListener('click', () => {
-            if (navConfirmDialog) navConfirmDialog.style.display = 'none';
-        });
-    }
+    // Initialize idle timer
+    resetIdleTimer();
 });
