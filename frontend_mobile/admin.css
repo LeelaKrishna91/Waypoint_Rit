@@ -467,32 +467,39 @@ input, textarea, select {
     
     .sidebar {
         width: 100%;
-        padding: 16px;
+        padding: 12px 16px;
         gap: 12px;
-        flex-direction: row;
-        flex-wrap: wrap;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        background-color: var(--color-navy);
     }
     
     .sidebar h2 {
-        font-size: 1.15rem;
+        font-size: 1.25rem;
         padding-left: 0;
+        margin-bottom: 4px;
+        text-align: center;
     }
     
     .sidebar .nav-btn {
-        width: auto;
-        padding: 8px 12px;
+        width: 100%;
+        max-width: 400px;
+        padding: 10px 14px;
         font-size: 0.85rem;
-        border-radius: var(--radius-small);
+        border-radius: var(--radius-medium);
+        background-color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 2px;
+    }
+    
+    .sidebar .nav-btn:hover {
+        background-color: rgba(255, 255, 255, 0.7);
     }
     
     .sidebar .nav-btn.active {
-        border-left: none;
-        border-bottom: 3px solid var(--color-mint);
-        border-top-left-radius: var(--radius-small);
-        border-bottom-left-radius: var(--radius-small);
+        border-left: 4px solid var(--color-mint);
+        background-color: var(--color-white);
+        box-shadow: var(--shadow-soft);
     }
     
     .sidebar div[style*="flex: 1"] {
@@ -501,7 +508,40 @@ input, textarea, select {
     
     .main-content {
         padding: 16px;
-        max-height: none;
+        width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .panel {
+        width: 100%;
+        gap: 16px;
+    }
+    
+    .panel h3 {
+        font-size: 1.15rem;
+        padding-bottom: 8px;
+    }
+    
+    .login-box {
+        width: 90%;
+        padding: 24px;
+    }
+    
+    .msg-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px;
+    }
+    
+    .msg-item div {
+        width: 100%;
+    }
+    
+    .msg-item div:last-child {
+        display: flex;
+        justify-content: flex-end;
+        width: 100%;
     }
     
     .form-row {
@@ -510,11 +550,11 @@ input, textarea, select {
     }
     
     .map-modal {
-        padding: 10px;
+        padding: 8px;
     }
     
     .modal-body {
-        height: calc(100vh - 120px);
+        height: calc(100vh - 110px);
         flex-direction: column;
     }
     
@@ -522,6 +562,7 @@ input, textarea, select {
         width: 100%;
         border-left: none;
         border-top: 1px solid var(--color-border);
-        height: 200px;
+        height: 180px;
+        padding: 12px;
     }
 }
