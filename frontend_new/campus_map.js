@@ -325,7 +325,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
-        await refreshCampusData();
+        refreshCampusData().catch(err => console.error("Background data load failed:", err));
 
         // Hide Splash Screen once everything is ready
         const splash = document.getElementById('splash-screen');

@@ -454,7 +454,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
-        await refreshCampusData();
+        refreshCampusData().catch(err => console.error("Background data load failed:", err));
 
         const splash = document.getElementById('splash-screen');
         if (splash) splash.classList.add('hidden');
