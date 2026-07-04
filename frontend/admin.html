@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- PWA / iOS Kiosk mode support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Waypoint RIT Admin">
     <title>RIT Admin | CMS Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
@@ -924,12 +928,18 @@
         // KIOSK MODE CONTROLLER FOR ADMIN PORTAL
         // ==========================================
 
-        // 1. Automatic Fullscreen on First User Interaction
+        // 1. Automatic Fullscreen on First User Interaction (cross-browser iOS/Safari safe)
         function enterFullscreenOnGesture() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.warn("Kiosk fullscreen blocked:", err);
-                });
+                const docEl = document.documentElement;
+                const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+                if (requestFs) {
+                    requestFs.call(docEl).catch(err => {
+                        console.warn("Kiosk fullscreen blocked:", err);
+                    });
+                } else {
+                    console.warn("Fullscreen API not supported on this browser/device.");
+                }
             }
             document.removeEventListener('click', enterFullscreenOnGesture);
             document.removeEventListener('touchstart', enterFullscreenOnGesture);
