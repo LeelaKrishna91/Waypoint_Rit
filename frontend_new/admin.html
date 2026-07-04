@@ -273,8 +273,15 @@
     </div>
 
     <script>
-        const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:"
-            ? "http://127.0.0.1:8000"
+        const isLocal = window.location.hostname === "localhost" || 
+                        window.location.hostname === "127.0.0.1" || 
+                        window.location.protocol === "file:" ||
+                        /^192\.168\./.test(window.location.hostname) ||
+                        /^10\./.test(window.location.hostname) ||
+                        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(window.location.hostname);
+
+        const API_URL = isLocal 
+            ? (window.location.protocol === "file:" ? "http://127.0.0.1:8000" : `${window.location.protocol}//${window.location.hostname}:8000`)
             : "https://waypoint-rit.onrender.com";
         
         async function attemptLogin() {
