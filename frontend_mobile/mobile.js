@@ -822,7 +822,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                     };
                     listDiv.appendChild(item);
                 });
-            }
         } catch (e) {
             listDiv.innerHTML = '<p style="font-size: 0.8rem; color: var(--color-text-dark);">Failed to retrieve room details.</p>';
         }
