@@ -1,4 +1,10 @@
 document.addEventListener("DOMContentLoaded", async () => {
+    // Dismiss splash screen quickly so app feels instant
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) splash.classList.add('hidden');
+    }, 500);
+
     // ==========================================
     // 0. API URL DETERMINATION & TOAST SYSTEM
     // ==========================================
@@ -468,11 +474,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 'fill-extrusion-opacity': 0.85
             }
         });
-
         refreshCampusData().catch(err => console.error("Background data load failed:", err));
-
-        const splash = document.getElementById('splash-screen');
-        if (splash) splash.classList.add('hidden');
     }
 
     window.outdoorMap.on('style.load', renderCustomLayers);
