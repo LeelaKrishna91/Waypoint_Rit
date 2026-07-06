@@ -204,6 +204,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let roomMarkersList = [];
     let activeSearchRoomId = "";
     let buildingsData = [];
+    let roomsData = [];
 
     // ==========================================
     // 5. MAP GEOLOCATION ACCURACY (GPS TRACKER)
@@ -528,8 +529,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
                 const rRes = await fetch(`${API_URL}/admin/rooms`);
                 if (rRes.ok) {
-                    const rooms = await rRes.json();
-                    rooms.forEach(r => {
+                    roomsData = await rRes.json();
+                    roomsData.forEach(r => {
                         if (!r.footprint_coordinates) return;
 
                         try {
@@ -739,10 +740,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         roomMarkersList = [];
 
         try {
-            const rRes = await fetch(`${API_URL}/admin/rooms`);
-            if (rRes.ok) {
-                const rooms = await rRes.json();
-                const filteredRooms = rooms.filter(r => r.building_id === buildingId && r.floor_level === floorLevel);
+            let rooms = roomsData;
+            if (!rooms || rooms.length === 0) {
+                const rRes = await fetch(`${API_URL}/admin/rooms`);
+                if (rRes.ok) {
+                    roomsData = await rRes.json();
+                    rooms = roomsData;
+                }
+            }
+            if (rooms && rooms.length > 0) {
+                const filteredRooms = rooms.filter(r => parseInt(r.building_id) === parseInt(buildingId) && parseInt(r.floor_level) === parseInt(floorLevel));
 
                 filteredRooms.forEach(r => {
                     if (r.coordinate_x && r.coordinate_y) {
@@ -785,10 +792,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         listDiv.innerHTML = '<p style="font-size: 0.8rem; color: var(--color-text-muted);">Loading rooms...</p>';
 
         try {
-            const res = await fetch(`${API_URL}/admin/rooms`);
-            if (res.ok) {
-                const rooms = await res.json();
-                const filtered = rooms.filter(r => r.building_id === buildingId && r.floor_level === floorLevel);
+            let rooms = roomsData;
+            if (!rooms || rooms.length === 0) {
+                const res = await fetch(`${API_URL}/admin/rooms`);
+                if (res.ok) {
+                    roomsData = await res.json();
+                    rooms = roomsData;
+                } else {
+                    throw new Error("Failed to fetch rooms from backend");
+                }
+            }
+            const filtered = rooms.filter(r => parseInt(r.building_id) === parseInt(buildingId) && parseInt(r.floor_level) === parseInt(floorLevel));
                 
                 listDiv.innerHTML = '';
                 if (filtered.length === 0) {
@@ -860,9 +874,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // 2. Accordion Rooms Directory
-            const rRes = await fetch(`${API_URL}/admin/rooms`);
-            if (rRes.ok) {
-                const rooms = await rRes.json();
+            let rooms = roomsData;
+            if (!rooms || rooms.length === 0) {
+                const rRes = await fetch(`${API_URL}/admin/rooms`);
+                if (rRes.ok) {
+                    roomsData = await rRes.json();
+                    rooms = roomsData;
+                }
+            }
+            if (rooms && rooms.length > 0) {
                 const roomsList = document.getElementById('mobile-rooms-directory');
                 roomsList.innerHTML = '';
 
