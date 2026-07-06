@@ -614,6 +614,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     function selectBuilding(b) {
         activeBuildingId = b.building_id;
         
+        // Hide active building shell to see inside (X-ray mode)
+        window.outdoorMap.setFilter('building-shells', [
+            'all',
+            ['==', ['get', 'type'], 'building'],
+            ['!=', ['to-number', ['get', 'id']], parseInt(activeBuildingId)]
+        ]);
+        
         window.outdoorMap.flyTo({
             center: [b.entrance_y, b.entrance_x],
             zoom: 19.2,
