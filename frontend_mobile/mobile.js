@@ -413,6 +413,20 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
+        // LAYER 1.5: Indoor Floor Plate (to support indoor rooms)
+        window.outdoorMap.addLayer({
+            'id': 'indoor-floor-plate',
+            'type': 'fill-extrusion',
+            'source': 'custom-campus',
+            'filter': ['all', ['==', ['get', 'type'], 'building'], ['==', ['get', 'id'], -1]],
+            'paint': {
+                'fill-extrusion-color': currentTheme === 'dark' ? '#1e293b' : '#f1f5f9',
+                'fill-extrusion-base': 0,
+                'fill-extrusion-height': 0.1,
+                'fill-extrusion-opacity': 0.95
+            }
+        });
+
         // Rooms Layer
         window.outdoorMap.addLayer({
             'id': 'indoor-rooms',
@@ -637,6 +651,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
                 ]);
 
+                window.outdoorMap.setFilter('indoor-floor-plate', [
+                    'all',
+                    ['==', ['get', 'type'], 'building'],
+                    ['==', ['to-number', ['get', 'id']], parseInt(activeBuildingId)]
+                ]);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', i * 4);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', i * 4 + 0.05);
+
                 // Filter dynamic room list on the bottom sheet
                 fetchRoomsForBuildingAndLevel(b.building_id, i);
 
@@ -674,6 +696,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ['==', ['to-number', ['get', 'level']], parseInt(i)],
                     ['==', ['to-number', ['get', 'parent']], parseInt(activeBuildingId)]
                 ]);
+
+                window.outdoorMap.setFilter('indoor-floor-plate', [
+                    'all',
+                    ['==', ['get', 'type'], 'building'],
+                    ['==', ['to-number', ['get', 'id']], parseInt(activeBuildingId)]
+                ]);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', i * 4);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', i * 4 + 0.05);
                 
                 // Keep bottom sheet horizontal slider in sync
                 document.querySelectorAll('.floor-pill-btn').forEach(pill => {
@@ -1175,6 +1205,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // 5. Clear all active building filter layers
         window.outdoorMap.setFilter('indoor-rooms', ['==', ['get', 'level'], -1]);
         window.outdoorMap.setFilter('indoor-walls', ['==', ['get', 'level'], -1]);
+        window.outdoorMap.setFilter('indoor-floor-plate', ['==', ['get', 'id'], -1]);
         window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
         
         // Clear room tags
