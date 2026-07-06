@@ -57,13 +57,27 @@ def debug_db():
     }
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.fetchone()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Run migration to add color column if missing
+        migration_status = ""
+        try:
+            cursor.execute("ALTER TABLE Rooms ADD COLUMN color VARCHAR(50) DEFAULT NULL")
+            conn.commit()
+            migration_status = "Success: Added color column to Rooms table."
+        except Exception as alter_err:
+            migration_status = f"Skipped/Failed: {str(alter_err)}"
+            
+        # Get Rooms columns
+        cursor.execute("DESCRIBE Rooms")
+        rooms_schema = cursor.fetchall()
+        
         conn.close()
         return {
             "status": "Success",
-            "message": "Successfully connected to the database!",
+            "message": "Connected and executed migration!",
+            "migration": migration_status,
+            "rooms_schema": rooms_schema,
             "config": config
         }
     except Exception as e:
