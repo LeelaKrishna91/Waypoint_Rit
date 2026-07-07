@@ -522,16 +522,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Show UI Elements
         document.getElementById('floor-widget-container').style.display = 'flex';
         document.getElementById('exit-building-btn').style.display = 'block';
-        const slideBtn = document.getElementById('slide-info-btn');
-        if (slideBtn) {
-            slideBtn.style.display = 'flex';
-            slideBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i> Hide Info';
-        }
 
         // Populate and slide in the Info Panel
         document.getElementById('info-title').innerText = building.name;
         document.getElementById('info-floors').innerText = totalFloors;
-        document.getElementById('building-info-panel').classList.add('visible');
+        const panel = document.getElementById('building-info-panel');
+        panel.classList.remove('collapsed');
+        panel.classList.add('visible');
+        const slideHandle = document.getElementById('panel-slide-handle');
+        if (slideHandle) slideHandle.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
     });
 
     window.outdoorMap.on('mouseenter', 'building-shells', () => window.outdoorMap.getCanvas().style.cursor = 'pointer');
@@ -738,22 +737,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Hide UI Elements
         document.getElementById('floor-widget-container').style.display = 'none';
         document.getElementById('exit-building-btn').style.display = 'none';
-        const slideBtn = document.getElementById('slide-info-btn');
-        if (slideBtn) slideBtn.style.display = 'none';
-        document.getElementById('building-info-panel').classList.remove('visible');
+        const panel = document.getElementById('building-info-panel');
+        panel.classList.remove('visible');
+        panel.classList.remove('collapsed');
         activeBuildingId = null;
     });
 
-    const slideInfoBtn = document.getElementById('slide-info-btn');
-    if (slideInfoBtn) {
-        slideInfoBtn.addEventListener('click', () => {
+    const panelSlideHandle = document.getElementById('panel-slide-handle');
+    if (panelSlideHandle) {
+        panelSlideHandle.addEventListener('click', () => {
             const panel = document.getElementById('building-info-panel');
-            if (panel.classList.contains('visible')) {
-                panel.classList.remove('visible');
-                slideInfoBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i> Show Info';
-            } else {
-                panel.classList.add('visible');
-                slideInfoBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i> Hide Info';
+            if (panel && panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                panelSlideHandle.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+            } else if (panel) {
+                panel.classList.add('collapsed');
+                panelSlideHandle.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
             }
         });
     }
@@ -847,17 +846,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Automatically open building and select the correct floor
             if (locationData.building_id) {
-                activeBuildingId = parseInt(locationData.building_id);
                 document.getElementById('floor-widget-container').style.display = 'flex';
                 document.getElementById('exit-building-btn').style.display = 'block';
-                const slideBtn = document.getElementById('slide-info-btn');
-                if (slideBtn) {
-                    slideBtn.style.display = 'flex';
-                    slideBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i> Hide Info';
-                }
                 document.getElementById('info-title').innerText = locationData.building_name;
                 document.getElementById('info-floors').innerText = locationData.total_floors;
-                document.getElementById('building-info-panel').classList.add('visible');
+                const panel = document.getElementById('building-info-panel');
+                panel.classList.remove('collapsed');
+                panel.classList.add('visible');
+                const slideHandle = document.getElementById('panel-slide-handle');
+                if (slideHandle) slideHandle.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
 
                 buildFloorSelector(locationData.total_floors);
 

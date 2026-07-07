@@ -78,9 +78,12 @@
     <div id="map-container"></div>
 
     <div id="building-info-panel" class="info-panel glass-panel">
-        <div class="panel-header">
-            <h2 id="info-title">Building Name</h2>
-            <p id="info-desc">Campus Facility</p>
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h2 id="info-title">Building Name</h2>
+                <p id="info-desc">Campus Facility</p>
+            </div>
+            <button id="panel-slide-handle" class="panel-slide-arrow" title="Toggle Building Info"><i class="fa-solid fa-chevron-left"></i></button>
         </div>
         <div class="info-stats">
             <div class="stat"><i class="fa-solid fa-layer-group"></i> <span><span id="info-floors">0</span> Floors</span></div>
@@ -118,9 +121,6 @@
 
     <button id="exit-building-btn" class="floating-exit-btn" style="display: none;">
         <i class="fa-solid fa-xmark"></i> Dismiss
-    </button>
-    <button id="slide-info-btn" class="floating-slide-btn" style="display: none;">
-        <i class="fa-solid fa-chevron-left"></i> Hide Info
     </button>
 
     <!-- QR Scanner Modal -->

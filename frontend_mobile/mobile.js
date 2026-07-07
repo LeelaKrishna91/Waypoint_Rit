@@ -52,24 +52,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function closeAllSheets() {
         Object.values(sheets).forEach(sheet => {
-            if (sheet) sheet.classList.remove('open');
+            if (sheet) {
+                sheet.classList.remove('open');
+                sheet.classList.remove('collapsed');
+            }
         });
-        const slideBtn = document.getElementById('slide-info-btn');
-        if (slideBtn && activeBuildingId) {
-            slideBtn.innerHTML = '<i class="fa-solid fa-building"></i> Show Info';
-        }
+        const handle = document.getElementById('building-sheet-handle');
+        if (handle) handle.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
     }
 
     function openSheet(sheetKey) {
         closeAllSheets();
         const target = sheets[sheetKey];
-        if (target) target.classList.add('open');
+        if (target) {
+            target.classList.add('open');
+            target.classList.remove('collapsed');
+        }
         hideDashboard(); // Hide landing overlay when sheet opens
         if (sheetKey === 'building') {
-            const slideBtn = document.getElementById('slide-info-btn');
-            if (slideBtn && activeBuildingId) {
-                slideBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Hide Info';
-            }
+            const handle = document.getElementById('building-sheet-handle');
+            if (handle) handle.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
         }
     }
 
@@ -101,8 +103,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const exitBtn = document.getElementById('exit-building-btn');
         if (exitBtn) exitBtn.style.display = 'none';
-        const slideBtn = document.getElementById('slide-info-btn');
-        if (slideBtn) slideBtn.style.display = 'none';
 
         closeAllSheets();
         activeBuildingId = null;
@@ -113,21 +113,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     const sheetDismissElem = document.getElementById('sheet-dismiss-btn');
     if (sheetDismissElem) sheetDismissElem.onclick = deselectBuilding;
 
-    const slideInfoBtn = document.getElementById('slide-info-btn');
-    if (slideInfoBtn) {
-        slideInfoBtn.addEventListener('click', () => {
+    const buildingSheetHandle = document.getElementById('building-sheet-handle');
+    if (buildingSheetHandle) {
+        buildingSheetHandle.addEventListener('click', () => {
             const sheet = document.getElementById('building-bottom-sheet');
-            if (sheet && sheet.classList.contains('open')) {
-                sheet.classList.remove('open');
-                slideInfoBtn.innerHTML = '<i class="fa-solid fa-building"></i> Show Info';
-            } else if (sheet) {
-                sheet.classList.add('open');
-                slideInfoBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Hide Info';
+            if (sheet && sheet.classList.contains('collapsed')) {
+                sheet.classList.remove('collapsed');
+                buildingSheetHandle.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+            } else if (sheet && sheet.classList.contains('open')) {
+                sheet.classList.add('collapsed');
+                buildingSheetHandle.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
             }
         });
     }
 
-    // Handle touch swipe-down on handles to close sheets
+    // Handle touch swipe-down on handles to close/collapse sheets
     document.querySelectorAll('.bottom-sheet-handle').forEach(handle => {
         let startY = 0;
         handle.addEventListener('touchstart', (e) => {
@@ -135,8 +135,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
         handle.addEventListener('touchmove', (e) => {
             const currentY = e.touches[0].clientY;
-            if (currentY - startY > 40) { // Dragged down
-                closeAllSheets();
+            if (currentY - startY > 30) { // Dragged down
+                if (handle.id === 'building-sheet-handle') {
+                    const sheet = document.getElementById('building-bottom-sheet');
+                    if (sheet && !sheet.classList.contains('collapsed')) {
+                        sheet.classList.add('collapsed');
+                        handle.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+                    }
+                } else {
+                    closeAllSheets();
+                }
+            } else if (startY - currentY > 30) { // Dragged up
+                if (handle.id === 'building-sheet-handle') {
+                    const sheet = document.getElementById('building-bottom-sheet');
+                    if (sheet && sheet.classList.contains('collapsed')) {
+                        sheet.classList.remove('collapsed');
+                        handle.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+                    }
+                }
             }
         });
     });
@@ -803,11 +819,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('floor-widget-container').style.display = 'flex';
         const exitBtn = document.getElementById('exit-building-btn');
         if (exitBtn) exitBtn.style.display = 'flex';
-        const slideBtn = document.getElementById('slide-info-btn');
-        if (slideBtn) {
-            slideBtn.style.display = 'flex';
-            slideBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Hide Info';
-        }
 
         // Slide up Building Info Bottom Sheet
         openSheet('building');
