@@ -4,13 +4,13 @@
   "name": "Waypoint RIT Administration Portal",
   "icons": [
     {
-      "src": "logo_admin.png",
+      "src": "logo_admin.png?v=5",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "logo_admin.png",
+      "src": "logo_admin.png?v=5",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
