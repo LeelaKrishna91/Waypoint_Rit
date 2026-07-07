@@ -54,6 +54,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         Object.values(sheets).forEach(sheet => {
             if (sheet) sheet.classList.remove('open');
         });
+        const slideBtn = document.getElementById('slide-info-btn');
+        if (slideBtn && activeBuildingId) {
+            slideBtn.innerHTML = '<i class="fa-solid fa-building"></i> Show Info';
+        }
     }
 
     function openSheet(sheetKey) {
@@ -61,6 +65,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         const target = sheets[sheetKey];
         if (target) target.classList.add('open');
         hideDashboard(); // Hide landing overlay when sheet opens
+        if (sheetKey === 'building') {
+            const slideBtn = document.getElementById('slide-info-btn');
+            if (slideBtn && activeBuildingId) {
+                slideBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Hide Info';
+            }
+        }
     }
 
     // Connect close buttons
@@ -91,6 +101,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const exitBtn = document.getElementById('exit-building-btn');
         if (exitBtn) exitBtn.style.display = 'none';
+        const slideBtn = document.getElementById('slide-info-btn');
+        if (slideBtn) slideBtn.style.display = 'none';
 
         closeAllSheets();
         activeBuildingId = null;
@@ -100,6 +112,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (exitBtnElem) exitBtnElem.onclick = deselectBuilding;
     const sheetDismissElem = document.getElementById('sheet-dismiss-btn');
     if (sheetDismissElem) sheetDismissElem.onclick = deselectBuilding;
+
+    const slideInfoBtn = document.getElementById('slide-info-btn');
+    if (slideInfoBtn) {
+        slideInfoBtn.addEventListener('click', () => {
+            const sheet = document.getElementById('building-bottom-sheet');
+            if (sheet && sheet.classList.contains('open')) {
+                sheet.classList.remove('open');
+                slideInfoBtn.innerHTML = '<i class="fa-solid fa-building"></i> Show Info';
+            } else if (sheet) {
+                sheet.classList.add('open');
+                slideInfoBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Hide Info';
+            }
+        });
+    }
 
     // Handle touch swipe-down on handles to close sheets
     document.querySelectorAll('.bottom-sheet-handle').forEach(handle => {
@@ -777,6 +803,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('floor-widget-container').style.display = 'flex';
         const exitBtn = document.getElementById('exit-building-btn');
         if (exitBtn) exitBtn.style.display = 'flex';
+        const slideBtn = document.getElementById('slide-info-btn');
+        if (slideBtn) {
+            slideBtn.style.display = 'flex';
+            slideBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Hide Info';
+        }
 
         // Slide up Building Info Bottom Sheet
         openSheet('building');
