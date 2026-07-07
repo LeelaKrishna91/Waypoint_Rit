@@ -769,9 +769,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (floorContainer.lastChild) {
             floorContainer.lastChild.click();
         }
+        if (verticalWidgetGroup.lastChild) {
+            verticalWidgetGroup.lastChild.classList.add('active');
+        }
 
-        // Hide vertical floor widget on map and show dismiss button
-        document.getElementById('floor-widget-container').style.display = 'none';
+        // Show vertical floor widget on map and show dismiss button
+        document.getElementById('floor-widget-container').style.display = 'flex';
         const exitBtn = document.getElementById('exit-building-btn');
         if (exitBtn) exitBtn.style.display = 'flex';
 

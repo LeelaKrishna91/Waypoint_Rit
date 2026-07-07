@@ -535,7 +535,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         buildFloorSelector(totalFloors);
 
         // Show UI Elements
-        document.getElementById('floor-widget-container').style.display = 'none';
+        document.getElementById('floor-widget-container').style.display = 'flex';
         document.getElementById('exit-building-btn').style.display = 'block';
 
         // Populate and slide in the Info Panel
@@ -642,32 +642,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             };
             group.appendChild(btn);
         }
-
-        const panelGroup = document.getElementById('panel-floor-btn-group');
-        if (panelGroup) {
-            panelGroup.innerHTML = '';
-            for (let i = totalFloors - 1; i >= 0; i--) {
-                const btn = document.createElement('button');
-                btn.className = 'floor-btn';
-                btn.innerText = i === 0 ? 'G' : i;
-                if (i === 0) btn.classList.add('active');
-                btn.onclick = () => {
-                    document.querySelectorAll('.panel-floor-btn-group .floor-btn, .floor-btn-group .floor-btn').forEach(b => {
-                        if (b.innerText === btn.innerText) b.classList.add('active');
-                        else b.classList.remove('active');
-                    });
-                    const targetBtn = Array.from(document.querySelectorAll('.floor-btn-group .floor-btn')).find(b => b.innerText === btn.innerText);
-                    if (targetBtn) targetBtn.click();
-                };
-                panelGroup.appendChild(btn);
-            }
-        }
-
-        if (group.lastChild) group.lastChild.click();
-        if (panelGroup && panelGroup.lastChild) {
-            document.querySelectorAll('.panel-floor-btn-group .floor-btn').forEach(b => b.classList.remove('active'));
-            panelGroup.lastChild.classList.add('active');
-        }
+        group.lastChild.click();
     }
 
     // ==========================================
@@ -862,7 +837,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Automatically open building and select the correct floor
             if (locationData.building_id) {
                 activeBuildingId = parseInt(locationData.building_id);
-                document.getElementById('floor-widget-container').style.display = 'none';
+                document.getElementById('floor-widget-container').style.display = 'flex';
                 document.getElementById('exit-building-btn').style.display = 'block';
                 document.getElementById('info-title').innerText = locationData.building_name;
                 document.getElementById('info-floors').innerText = locationData.total_floors;
@@ -872,7 +847,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 if (locationData.type === 'room' && locationData.floor_level !== undefined) {
                     const targetText = locationData.floor_level === 0 ? 'G' : locationData.floor_level.toString();
-                    document.querySelectorAll('.floor-btn-group .floor-btn, .panel-floor-btn-group .floor-btn').forEach(btn => {
+                    document.querySelectorAll('.floor-btn-group .floor-btn').forEach(btn => {
                         if (btn.innerText === targetText) {
                             btn.click();
                         }
