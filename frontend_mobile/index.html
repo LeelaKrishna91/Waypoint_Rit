@@ -129,6 +129,10 @@
         </button>
     </div>
 
+    <button id="exit-building-btn" class="floating-exit-btn" style="display: none;">
+        <i class="fa-solid fa-xmark"></i> Dismiss
+    </button>
+
     <!-- Bottom Sheets -->
 
     <!-- 1. Building Info Bottom Sheet -->
@@ -139,7 +143,10 @@
                 <h3 id="sheet-building-title">Building Name</h3>
                 <p id="sheet-building-subtitle">Campus Block</p>
             </div>
-            <button id="close-sheet-btn" class="sheet-close-btn">&times;</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button id="sheet-dismiss-btn" class="dismiss-building-btn"><i class="fa-solid fa-xmark"></i> Dismiss</button>
+                <button id="close-sheet-btn" class="sheet-close-btn">&times;</button>
+            </div>
         </div>
         <div class="bottom-sheet-content">
             <div class="sheet-section">

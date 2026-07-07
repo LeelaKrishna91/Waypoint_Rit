@@ -68,6 +68,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('close-updates-btn').onclick = closeAllSheets;
     document.getElementById('close-menu-btn').onclick = closeAllSheets;
 
+    function deselectBuilding() {
+        if (!window.outdoorMap) return;
+        window.outdoorMap.flyTo({
+            center: ritCenter,
+            zoom: 17.2,
+            pitch: 55,
+            bearing: -20,
+            duration: 1500
+        });
+        window.outdoorMap.setFilter('indoor-rooms', ['==', ['get', 'level'], -1]);
+        window.outdoorMap.setFilter('indoor-walls', ['==', ['get', 'level'], -1]);
+        window.outdoorMap.setFilter('indoor-furniture', ['==', ['get', 'level'], -1]);
+        window.outdoorMap.setFilter('indoor-floor-plate', ['==', ['get', 'id'], -1]);
+        window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
+
+        roomMarkersList.forEach(m => m.remove());
+        roomMarkersList = [];
+
+        const floorWidget = document.getElementById('floor-widget-container');
+        if (floorWidget) floorWidget.style.display = 'none';
+
+        const exitBtn = document.getElementById('exit-building-btn');
+        if (exitBtn) exitBtn.style.display = 'none';
+
+        closeAllSheets();
+        activeBuildingId = null;
+    }
+
+    const exitBtnElem = document.getElementById('exit-building-btn');
+    if (exitBtnElem) exitBtnElem.onclick = deselectBuilding;
+    const sheetDismissElem = document.getElementById('sheet-dismiss-btn');
+    if (sheetDismissElem) sheetDismissElem.onclick = deselectBuilding;
+
     // Handle touch swipe-down on handles to close sheets
     document.querySelectorAll('.bottom-sheet-handle').forEach(handle => {
         let startY = 0;
@@ -737,8 +770,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             floorContainer.lastChild.click();
         }
 
-        // Show widget controls
-        document.getElementById('floor-widget-container').style.display = 'flex';
+        // Hide vertical floor widget on map and show dismiss button
+        document.getElementById('floor-widget-container').style.display = 'none';
+        const exitBtn = document.getElementById('exit-building-btn');
+        if (exitBtn) exitBtn.style.display = 'flex';
 
         // Slide up Building Info Bottom Sheet
         openSheet('building');
