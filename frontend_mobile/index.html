@@ -131,13 +131,16 @@
 
     <button id="exit-building-btn" class="floating-exit-btn" style="display: none;">
         <i class="fa-solid fa-xmark"></i> Dismiss
+    </button>
+    <button id="slide-info-btn" class="floating-slide-btn" style="display: none;">
+        <i class="fa-solid fa-chevron-down"></i> Hide Info
+    </button>
+
     <!-- Bottom Sheets -->
 
     <!-- 1. Building Info Bottom Sheet -->
     <div id="building-bottom-sheet" class="bottom-sheet">
-        <div id="building-sheet-handle" class="bottom-sheet-handle interactive-handle" title="Toggle Building Info">
-            <i class="fa-solid fa-chevron-down"></i>
-        </div>
+        <div class="bottom-sheet-handle"></div>
         <div class="bottom-sheet-header">
             <div>
                 <h3 id="sheet-building-title">Building Name</h3>

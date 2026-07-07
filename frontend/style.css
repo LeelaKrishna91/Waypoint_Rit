@@ -353,31 +353,6 @@ body {
     transform: translateX(0);
 }
 
-.info-panel.visible.collapsed {
-    transform: translateX(calc(-100% + 46px));
-}
-
-.panel-slide-arrow {
-    background: rgba(11, 37, 69, 0.08);
-    border: 1px solid rgba(11, 37, 69, 0.15);
-    color: #0B2545;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    transition: 0.2s;
-    flex-shrink: 0;
-}
-
-.panel-slide-arrow:hover {
-    background: #0284c7;
-    color: white;
-}
-
 .panel-header {
     margin-bottom: 10px;
 }
@@ -540,7 +515,29 @@ body {
     background: #fee2e2;
 }
 
+.floating-slide-btn {
+    position: absolute;
+    bottom: 40px;
+    left: 155px;
+    z-index: 1000;
+    background: white;
+    color: #0284c7;
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
+.floating-slide-btn:hover {
+    background: #e0f2fe;
+}
 
 /* Pin */
 .glowing-pin {
