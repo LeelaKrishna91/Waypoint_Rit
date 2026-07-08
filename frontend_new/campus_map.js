@@ -811,29 +811,44 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    document.getElementById('exit-building-btn').addEventListener('click', () => {
-        window.outdoorMap.flyTo({ center: ritCenter, zoom: 17.5, pitch: 60, duration: 1500 });
-        window.outdoorMap.setFilter('indoor-rooms', ['==', ['get', 'level'], -1]);
-        window.outdoorMap.setFilter('indoor-walls', ['==', ['get', 'level'], -1]);
-        window.outdoorMap.setFilter('indoor-furniture', ['==', ['get', 'level'], -1]);
-        window.outdoorMap.setFilter('indoor-floor-plate', ['==', ['get', 'id'], -1]);
-        window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
+    function deselectBuilding() {
+        if (window.outdoorMap) {
+            window.outdoorMap.flyTo({ center: ritCenter, zoom: 17.5, pitch: 60, duration: 1500 });
+            if (window.outdoorMap.getLayer('indoor-rooms')) window.outdoorMap.setFilter('indoor-rooms', ['==', ['get', 'level'], -1]);
+            if (window.outdoorMap.getLayer('indoor-walls')) window.outdoorMap.setFilter('indoor-walls', ['==', ['get', 'level'], -1]);
+            if (window.outdoorMap.getLayer('indoor-furniture')) window.outdoorMap.setFilter('indoor-furniture', ['==', ['get', 'level'], -1]);
+            if (window.outdoorMap.getLayer('indoor-floor-plate')) window.outdoorMap.setFilter('indoor-floor-plate', ['==', ['get', 'id'], -1]);
+            if (window.outdoorMap.getLayer('building-shells')) window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
+        }
 
-        // Clear room labels
         roomMarkersList.forEach(item => {
             const marker = item.marker || item;
             if (marker && marker.remove) marker.remove();
         });
         roomMarkersList = [];
 
-        // Hide UI Elements
-        document.getElementById('floor-widget-container').style.display = 'none';
-        document.getElementById('exit-building-btn').style.display = 'none';
+        const floorWidget = document.getElementById('floor-widget-container');
+        if (floorWidget) floorWidget.style.display = 'none';
+
+        const exitBtn = document.getElementById('exit-building-btn');
+        if (exitBtn) exitBtn.style.display = 'none';
+
         const slideBtn = document.getElementById('slide-info-btn');
         if (slideBtn) slideBtn.style.display = 'none';
-        document.getElementById('building-info-panel').classList.remove('visible');
+
+        const infoPanel = document.getElementById('building-info-panel');
+        if (infoPanel) infoPanel.classList.remove('visible');
+
         activeBuildingId = null;
-    });
+    }
+
+    window.deselectBuilding = deselectBuilding;
+
+    const exitBtnElem = document.getElementById('exit-building-btn');
+    if (exitBtnElem) {
+        exitBtnElem.onclick = deselectBuilding;
+        exitBtnElem.addEventListener('click', deselectBuilding);
+    }
 
     const slideInfoBtn = document.getElementById('slide-info-btn');
     if (slideInfoBtn) {
@@ -851,9 +866,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const panelDismissBtn = document.getElementById('panel-dismiss-btn');
     if (panelDismissBtn) {
-        panelDismissBtn.addEventListener('click', () => {
-            document.getElementById('exit-building-btn').click();
-        });
+        panelDismissBtn.onclick = deselectBuilding;
+        panelDismissBtn.addEventListener('click', deselectBuilding);
     }
 
     // ==========================================

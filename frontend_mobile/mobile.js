@@ -108,10 +108,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         activeBuildingId = null;
     }
 
+    window.deselectBuilding = deselectBuilding;
+
     const exitBtnElem = document.getElementById('exit-building-btn');
-    if (exitBtnElem) exitBtnElem.onclick = deselectBuilding;
+    if (exitBtnElem) {
+        exitBtnElem.onclick = deselectBuilding;
+        exitBtnElem.addEventListener('click', deselectBuilding);
+    }
     const sheetDismissElem = document.getElementById('sheet-dismiss-btn');
-    if (sheetDismissElem) sheetDismissElem.onclick = deselectBuilding;
+    if (sheetDismissElem) {
+        sheetDismissElem.onclick = deselectBuilding;
+        sheetDismissElem.addEventListener('click', deselectBuilding);
+    }
 
     const slideInfoBtn = document.getElementById('slide-info-btn');
     if (slideInfoBtn) {
