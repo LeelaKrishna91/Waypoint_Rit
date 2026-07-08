@@ -848,21 +848,41 @@ document.addEventListener("DOMContentLoaded", async () => {
         setNavActive('explore');
     }
     function updateRoomMarkerOffsets() {
-        if (!window.outdoorMap || roomMarkersList.length === 0) return;
-        const pitch = window.outdoorMap.getPitch() * (Math.PI / 180);
-        const zoom = window.outdoorMap.getZoom();
-        const center = window.outdoorMap.getCenter();
-        const centerLat = center.lat * (Math.PI / 180);
-        const metersPerPixel = (40075016.68 * Math.cos(centerLat)) / (512 * Math.pow(2, zoom));
-        const pixelsPerMeter = 1 / metersPerPixel;
-        const sinPitch = Math.sin(pitch);
+        if (!window.outdoorMap || !window.outdoorMap.transform || !window.outdoorMap.transform.projMatrix || roomMarkersList.length === 0) return;
+        const tr = window.outdoorMap.transform;
+        const m = tr.projMatrix;
 
         roomMarkersList.forEach(item => {
             const marker = item.marker || item;
+            const lng = item.lng;
+            const lat = item.lat;
             const elevation = item.elevation || 0;
-            if (marker && marker.setOffset) {
-                const dy = elevation * pixelsPerMeter * sinPitch;
-                marker.setOffset([0, -dy]);
+
+            if (marker && marker.setOffset && lng !== undefined && lat !== undefined && !isNaN(lng) && !isNaN(lat)) {
+                const cAlt = mapboxgl.MercatorCoordinate.fromLngLat([lng, lat], elevation);
+                const cGround = mapboxgl.MercatorCoordinate.fromLngLat([lng, lat], 0);
+
+                const clipXAlt = cAlt.x * m[0] + cAlt.y * m[4] + cAlt.z * m[8] + m[12];
+                const clipYAlt = cAlt.x * m[1] + cAlt.y * m[5] + cAlt.z * m[9] + m[13];
+                const clipWAlt = cAlt.x * m[3] + cAlt.y * m[7] + cAlt.z * m[11] + m[15];
+
+                const clipXGrd = cGround.x * m[0] + cGround.y * m[4] + cGround.z * m[8] + m[12];
+                const clipYGrd = cGround.x * m[1] + cGround.y * m[5] + cGround.z * m[9] + m[13];
+                const clipWGrd = cGround.x * m[3] + cGround.y * m[7] + cGround.z * m[11] + m[15];
+
+                if (clipWAlt !== 0 && clipWGrd !== 0) {
+                    const ndcXAlt = clipXAlt / clipWAlt;
+                    const ndcYAlt = clipYAlt / clipWAlt;
+                    const ndcXGrd = clipXGrd / clipWGrd;
+                    const ndcYGrd = clipYGrd / clipWGrd;
+
+                    const pXAlt = ((ndcXAlt + 1) / 2) * tr.width;
+                    const pYAlt = ((1 - ndcYAlt) / 2) * tr.height;
+                    const pXGrd = ((ndcXGrd + 1) / 2) * tr.width;
+                    const pYGrd = ((1 - ndcYGrd) / 2) * tr.height;
+
+                    marker.setOffset([pXAlt - pXGrd, pYAlt - pYGrd]);
+                }
             }
         });
     }
@@ -906,21 +926,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                         const base_h = r.floor_level * 4;
                         const elevation = base_h + 2;
+                        const lng = parseFloat(r.coordinate_y);
+                        const lat = parseFloat(r.coordinate_x);
                         const m = new mapboxgl.Marker({
                             element: el,
                             pitchAlignment: 'viewport',
                             rotationAlignment: 'viewport'
                         })
-                        .setLngLat([r.coordinate_y, r.coordinate_x])
+                        .setLngLat([lng, lat])
                         .addTo(window.outdoorMap);
 
-                        roomMarkersList.push({ marker: m, elevation: elevation });
+                        roomMarkersList.push({ marker: m, lng: lng, lat: lat, elevation: elevation });
                     }
                 });
 
                 updateRoomMarkerOffsets();
                 window.outdoorMap.off('move', updateRoomMarkerOffsets);
+                window.outdoorMap.off('render', updateRoomMarkerOffsets);
                 window.outdoorMap.on('move', updateRoomMarkerOffsets);
+                window.outdoorMap.on('render', updateRoomMarkerOffsets);
             }
         } catch (e) {
             console.error("Failed to render room labels", e);
