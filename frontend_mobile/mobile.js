@@ -725,8 +725,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ['==', ['get', 'type'], 'building'],
                     ['==', ['to-number', ['get', 'id']], parseInt(activeBuildingId)]
                 ]);
-                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', i * 4);
-                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', i * 4 + 0.05);
+                const floatElevation = i * 4;
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', floatElevation);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', floatElevation + 0.05);
+
+                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-base', floatElevation);
+                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-height', floatElevation + 3.2);
+
+                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-base', floatElevation);
+                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-height', floatElevation + 3.2);
 
                 // Filter dynamic room list on the bottom sheet
                 fetchRoomsForBuildingAndLevel(b.building_id, i);
@@ -771,8 +778,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ['==', ['get', 'type'], 'building'],
                     ['==', ['to-number', ['get', 'id']], parseInt(activeBuildingId)]
                 ]);
-                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', i * 4);
-                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', i * 4 + 0.05);
+                const floatElevation = i * 4;
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', floatElevation);
+                window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', floatElevation + 0.05);
+
+                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-base', floatElevation);
+                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-height', floatElevation + 3.2);
+
+                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-base', floatElevation);
+                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-height', floatElevation + 3.2);
                 
                 // Keep bottom sheet horizontal slider in sync
                 document.querySelectorAll('.floor-pill-btn').forEach(pill => {
@@ -813,8 +827,30 @@ document.addEventListener("DOMContentLoaded", async () => {
         openSheet('building');
         setNavActive('explore');
     }
+    function updateRoomMarkerOffsets() {
+        if (!window.outdoorMap || roomMarkersList.length === 0) return;
+        const pitch = window.outdoorMap.getPitch() * (Math.PI / 180);
+        const zoom = window.outdoorMap.getZoom();
+        const center = window.outdoorMap.getCenter();
+        const centerLat = center.lat * (Math.PI / 180);
+        const metersPerPixel = (40075016.68 * Math.cos(centerLat)) / (512 * Math.pow(2, zoom));
+        const pixelsPerMeter = 1 / metersPerPixel;
+        const sinPitch = Math.sin(pitch);
+
+        roomMarkersList.forEach(item => {
+            const marker = item.marker || item;
+            const elevation = item.elevation || 0;
+            if (marker && marker.setOffset) {
+                const dy = elevation * pixelsPerMeter * sinPitch;
+                marker.setOffset([0, -dy]);
+            }
+        });
+    }
     async function renderRoomLabels(buildingId, floorLevel) {
-        roomMarkersList.forEach(m => m.remove());
+        roomMarkersList.forEach(item => {
+            const marker = item.marker || item;
+            if (marker && marker.remove) marker.remove();
+        });
         roomMarkersList = [];
 
         try {
@@ -849,17 +885,22 @@ document.addEventListener("DOMContentLoaded", async () => {
                         };
 
                         const base_h = r.floor_level * 4;
+                        const elevation = base_h + 2;
                         const m = new mapboxgl.Marker({
                             element: el,
                             pitchAlignment: 'viewport',
                             rotationAlignment: 'viewport'
                         })
-                        .setLngLat([r.coordinate_y, r.coordinate_x, base_h + 1.5])
+                        .setLngLat([r.coordinate_y, r.coordinate_x])
                         .addTo(window.outdoorMap);
 
-                        roomMarkersList.push(m);
+                        roomMarkersList.push({ marker: m, elevation: elevation });
                     }
                 });
+
+                updateRoomMarkerOffsets();
+                window.outdoorMap.off('move', updateRoomMarkerOffsets);
+                window.outdoorMap.on('move', updateRoomMarkerOffsets);
             }
         } catch (e) {
             console.error("Failed to render room labels", e);
@@ -1306,7 +1347,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.outdoorMap.setFilter('building-shells', ['==', ['get', 'type'], 'building']);
         
         // Clear room tags
-        roomMarkersList.forEach(m => m.remove());
+        roomMarkersList.forEach(item => {
+            const marker = item.marker || item;
+            if (marker && marker.remove) marker.remove();
+        });
         roomMarkersList = [];
         
         // Hide floor controls
