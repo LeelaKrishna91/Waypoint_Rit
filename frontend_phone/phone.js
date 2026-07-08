@@ -5,7 +5,7 @@
 
 mapboxgl.accessToken = 'pk.eyJ1IjoibGVlbGFrcmlzaG5hOTEiLCJhIjoiY21ubGRyd3Y0MTE0dDJvcXVtcTVtZmpsdSJ9.' + '82mSmhy8H3hZ-x-wCsCtzw';
 
-const RIT_CENTER = [77.564998, 14.654804];
+const RIT_CENTER = [80.0447, 13.0390];
 let activeBuildingId = null;
 let activeFloorLevel = null;
 let currentTheme = localStorage.getItem('phone_theme') || 'light';
@@ -13,6 +13,17 @@ let allCampusRooms = [];
 let allCampusBuildings = [];
 let roomMarkersList = [];
 let isPitch3D = true;
+
+const isLocal = window.location.hostname === "localhost" ||
+                window.location.hostname === "127.0.0.1" ||
+                window.location.protocol === "file:" ||
+                /^192\.168\./.test(window.location.hostname) ||
+                /^10\./.test(window.location.hostname) ||
+                /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(window.location.hostname);
+
+const API_URL = isLocal
+    ? (window.location.protocol === "file:" ? "http://127.0.0.1:8000" : `${window.location.protocol}//${window.location.hostname}:8000`)
+    : "https://waypoint-rit.onrender.com";
 
 // Toast Utility
 function showToast(message, type = 'info') {
@@ -161,8 +172,8 @@ async function fetchCampusData() {
     try {
         const features = [];
         const [bRes, rRes] = await Promise.all([
-            fetch('/admin/buildings').catch(() => ({ ok: false })),
-            fetch('/admin/rooms').catch(() => ({ ok: false }))
+            fetch(`${API_URL}/admin/buildings`).catch(() => ({ ok: false })),
+            fetch(`${API_URL}/admin/rooms`).catch(() => ({ ok: false }))
         ]);
 
         if (bRes && bRes.ok) {

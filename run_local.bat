@@ -16,12 +16,16 @@ start "Waypoint_Rit Mobile" cmd /k "python -m http.server 8081 --directory front
 echo Starting Frontend New Server on http://localhost:8082 ...
 start "Waypoint_Rit Frontend New" cmd /k "python -m http.server 8082 --directory frontend_new"
 
+echo Starting Frontend Phone Server on http://localhost:8083 ...
+start "Waypoint_Rit Phone Frontend" cmd /k "python -m http.server 8083 --directory frontend_phone"
+
 echo.
 echo All services launched!
 echo - Backend API: http://127.0.0.1:8000
 echo - Main Frontend: http://localhost:8080
 echo - Mobile Frontend: http://localhost:8081
 echo - New Frontend / Admin: http://localhost:8082
+echo - Phone Frontend: http://localhost:8083
 echo.
 echo You can close the separate terminal windows to stop the servers.
 pause
