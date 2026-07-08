@@ -303,10 +303,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             'source': 'custom-campus',
             'filter': ['all', ['==', ['get', 'type'], 'room-wall'], ['==', ['get', 'level'], -1]],
             'paint': {
-                'fill-extrusion-color': currentTheme === 'dark' ? '#384252' : '#cbd5e1',
+                'fill-extrusion-color': currentTheme === 'dark' ? '#64748b' : '#e2e8f0',
                 'fill-extrusion-base': ['get', 'base_h'],
-                'fill-extrusion-height': ['+', ['get', 'base_h'], 2.5],
-                'fill-extrusion-opacity': 0.92
+                'fill-extrusion-height': ['+', ['get', 'base_h'], 2.6],
+                'fill-extrusion-opacity': 1.0
             }
         });
 
@@ -476,9 +476,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                             // Generate 3D Walls for the room
                             try {
                                 const outerRing = coords[0];
-                                if (outerRing && outerRing.length >= 2) {
+                                if (outerRing && outerRing.length >= 3) {
                                     const line = turf.lineString(outerRing);
-                                    const bufferedWall = turf.buffer(line, 0.15, { units: 'meters' });
+                                    const bufferedWall = turf.buffer(line, 0.38, { units: 'meters' });
                                     features.push({
                                         'type': 'Feature',
                                         'properties': {
@@ -698,13 +698,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                 window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', floatElevation + 0.05);
 
                 window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-base', floatElevation + 0.05);
-                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-height', floatElevation + 0.12);
+                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-height', floatElevation + 0.18);
 
                 window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-base', floatElevation + 0.05);
-                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-height', floatElevation + 2.5);
+                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-height', floatElevation + 2.6);
 
-                window.outdoorMap.setPaintProperty('indoor-furniture', 'fill-extrusion-base', floatElevation + 0.12);
-                window.outdoorMap.setPaintProperty('indoor-furniture', 'fill-extrusion-height', floatElevation + 0.75);
+                window.outdoorMap.setPaintProperty('indoor-furniture', 'fill-extrusion-base', floatElevation + 0.18);
+                window.outdoorMap.setPaintProperty('indoor-furniture', 'fill-extrusion-height', floatElevation + 0.85);
 
                 // Render detail room labels
                 renderRoomLabels(activeBuildingId, i);
