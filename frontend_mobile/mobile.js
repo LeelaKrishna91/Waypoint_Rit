@@ -360,12 +360,29 @@ document.addEventListener("DOMContentLoaded", async () => {
         markersList.forEach(m => m.remove());
         markersList = [];
 
-        // WORLD MASK
-        if (window.outdoorMap.getSource('world-mask')) {
-            if (window.outdoorMap.getLayer('world-mask-layer')) window.outdoorMap.removeLayer('world-mask-layer');
-            window.outdoorMap.removeSource('world-mask');
-        }
-        
+        // Clear if updating
+        const layersToRemove = [
+            'world-mask-layer',
+            'campus-wall-layer',
+            'indoor-furniture',
+            'indoor-walls',
+            'indoor-rooms',
+            'indoor-floor-plate',
+            'building-shells'
+        ];
+        layersToRemove.forEach(layerId => {
+            if (window.outdoorMap.getLayer(layerId)) {
+                window.outdoorMap.removeLayer(layerId);
+            }
+        });
+
+        const sourcesToRemove = ['world-mask', 'campus-wall', 'custom-campus'];
+        sourcesToRemove.forEach(sourceId => {
+            if (window.outdoorMap.getSource(sourceId)) {
+                window.outdoorMap.removeSource(sourceId);
+            }
+        });
+
         window.outdoorMap.addSource('world-mask', {
             'type': 'geojson',
             'data': {
@@ -651,6 +668,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             window.outdoorMap.getSource('custom-campus').setData({ 'type': 'FeatureCollection', 'features': features });
+            if (activeBuildingId !== null && window.outdoorMap.getLayer('building-shells')) {
+                window.outdoorMap.setFilter('building-shells', ['!=', ['to-number', ['get', 'id']], parseInt(activeBuildingId)]);
+            }
         } catch (e) {
             console.error("Server connections unavailable for map markers.", e);
         }

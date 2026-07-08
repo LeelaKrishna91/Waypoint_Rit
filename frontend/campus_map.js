@@ -110,16 +110,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Abstract layer building out so it can run again if style changes (dark mode)
     async function renderCustomLayers() {
         // Clear if updating
-        if (window.outdoorMap.getSource('world-mask')) {
-            if (window.outdoorMap.getLayer('world-mask-layer')) window.outdoorMap.removeLayer('world-mask-layer');
-            window.outdoorMap.removeSource('world-mask');
-        }
-        if (window.outdoorMap.getSource('custom-campus')) {
-            if (window.outdoorMap.getLayer('indoor-rooms')) window.outdoorMap.removeLayer('indoor-rooms');
-            if (window.outdoorMap.getLayer('indoor-walls')) window.outdoorMap.removeLayer('indoor-walls');
-            if (window.outdoorMap.getLayer('indoor-furniture')) window.outdoorMap.removeLayer('indoor-furniture');
-            if (window.outdoorMap.getLayer('indoor-floor-plate')) window.outdoorMap.removeLayer('indoor-floor-plate');
-        }
+        const layersToRemove = [
+            'world-mask-layer',
+            'campus-wall-layer',
+            'indoor-furniture',
+            'indoor-walls',
+            'indoor-rooms',
+            'indoor-floor-plate',
+            'building-shells'
+        ];
+        layersToRemove.forEach(layerId => {
+            if (window.outdoorMap.getLayer(layerId)) {
+                window.outdoorMap.removeLayer(layerId);
+            }
+        });
+
+        const sourcesToRemove = ['world-mask', 'campus-wall', 'custom-campus'];
+        sourcesToRemove.forEach(sourceId => {
+            if (window.outdoorMap.getSource(sourceId)) {
+                window.outdoorMap.removeSource(sourceId);
+            }
+        });
 
         // MASK LAYER: Hides the rest of the world outside the campus
         window.outdoorMap.addSource('world-mask', {
@@ -496,6 +507,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             } catch (err) { console.log("Room data not yet available."); }
 
             window.outdoorMap.getSource('custom-campus').setData({ 'type': 'FeatureCollection', 'features': features });
+            if (activeBuildingId !== null && window.outdoorMap.getLayer('building-shells')) {
+                window.outdoorMap.setFilter('building-shells', ['!=', ['to-number', ['get', 'id']], parseInt(activeBuildingId)]);
+            }
         } catch (e) { console.error("Database connection failed", e); }
     }
 
