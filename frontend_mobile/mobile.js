@@ -532,8 +532,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ]
                 ],
                 'fill-extrusion-base': ['get', 'base_h'],
-                'fill-extrusion-height': ['+', ['get', 'base_h'], 0.1],
-                'fill-extrusion-opacity': 0.6
+                'fill-extrusion-height': ['+', ['get', 'base_h'], 0.12],
+                'fill-extrusion-opacity': 0.88
             }
         });
 
@@ -546,8 +546,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             'paint': {
                 'fill-extrusion-color': currentTheme === 'dark' ? '#384252' : '#cbd5e1',
                 'fill-extrusion-base': ['get', 'base_h'],
-                'fill-extrusion-height': ['get', 'ceil_h'],
-                'fill-extrusion-opacity': 0.85
+                'fill-extrusion-height': ['+', ['get', 'base_h'], 2.5],
+                'fill-extrusion-opacity': 0.92
             }
         });
         refreshCampusData().catch(err => console.error("Background data load failed:", err));
@@ -749,11 +749,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', floatElevation);
                 window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', floatElevation + 0.05);
 
-                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-base', floatElevation);
-                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-height', floatElevation + 3.2);
+                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-base', floatElevation + 0.05);
+                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-height', floatElevation + 0.12);
 
-                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-base', floatElevation);
-                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-height', floatElevation + 3.2);
+                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-base', floatElevation + 0.05);
+                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-height', floatElevation + 2.5);
 
                 // Filter dynamic room list on the bottom sheet
                 fetchRoomsForBuildingAndLevel(b.building_id, i);
@@ -802,11 +802,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-base', floatElevation);
                 window.outdoorMap.setPaintProperty('indoor-floor-plate', 'fill-extrusion-height', floatElevation + 0.05);
 
-                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-base', floatElevation);
-                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-height', floatElevation + 3.2);
+                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-base', floatElevation + 0.05);
+                window.outdoorMap.setPaintProperty('indoor-rooms', 'fill-extrusion-height', floatElevation + 0.12);
 
-                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-base', floatElevation);
-                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-height', floatElevation + 3.2);
+                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-base', floatElevation + 0.05);
+                window.outdoorMap.setPaintProperty('indoor-walls', 'fill-extrusion-height', floatElevation + 2.5);
                 
                 // Keep bottom sheet horizontal slider in sync
                 document.querySelectorAll('.floor-pill-btn').forEach(pill => {
