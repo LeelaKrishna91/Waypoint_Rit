@@ -42,6 +42,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    function syncToggles() {
+        if (darkModeSwitch) darkModeSwitch.checked = (currentTheme === 'dark');
+    }
+    window.addEventListener('load', syncToggles);
+    window.addEventListener('pageshow', syncToggles);
+
     // ==========================================
     // 0.1. TOAST NOTIFICATIONS & UI HELPERS
     // ==========================================

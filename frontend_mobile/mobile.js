@@ -37,6 +37,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    function syncToggles() {
+        if (themeToggleBtn) themeToggleBtn.checked = (currentTheme === 'dark');
+    }
+    window.addEventListener('load', syncToggles);
+    window.addEventListener('pageshow', syncToggles);
+
     // ==========================================
     // 0.1. API URL DETERMINATION & TOAST SYSTEM
     // ==========================================
@@ -106,6 +112,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (slideBtn && activeBuildingId) {
                 slideBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Hide Info';
             }
+        }
+        if (sheetKey === 'menu') {
+            syncToggles();
         }
     }
 
