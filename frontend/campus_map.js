@@ -11,7 +11,39 @@ const API_URL = isLocal
 
 document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
-    // 0. TOAST NOTIFICATIONS & UI HELPERS
+    // 0. IMMEDIATE THEME & TOGGLE SYNCHRONIZATION
+    // ==========================================
+    let currentTheme = 'light';
+    const darkModeSwitch = document.getElementById('dark-mode-switch');
+    if (darkModeSwitch) {
+        darkModeSwitch.checked = false; // Force unchecked immediately on load
+        darkModeSwitch.addEventListener('change', (e) => {
+            currentTheme = e.target.checked ? 'dark' : 'light';
+            document.body.classList.toggle('dark-theme', e.target.checked);
+
+            if (window.outdoorMap) {
+                const styleURL = currentTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11';
+                window.outdoorMap.setStyle(styleURL);
+            }
+        });
+    }
+
+    const wallToggleSwitch = document.getElementById('wall-toggle-switch');
+    if (wallToggleSwitch) {
+        wallToggleSwitch.checked = true; // Default visible
+        wallToggleSwitch.addEventListener('change', (e) => {
+            if (window.outdoorMap && window.outdoorMap.getLayer('campus-wall-layer')) {
+                window.outdoorMap.setLayoutProperty(
+                    'campus-wall-layer',
+                    'visibility',
+                    e.target.checked ? 'visible' : 'none'
+                );
+            }
+        });
+    }
+
+    // ==========================================
+    // 0.1. TOAST NOTIFICATIONS & UI HELPERS
     // ==========================================
     function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
@@ -103,10 +135,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     let isTrackingLocation = false;
 
     // ==========================================
-    // 3. 3D X-RAY DATA ENGINE & POI MARKERS
-    // ==========================================
-    let currentTheme = 'light';
-
     // Abstract layer building out so it can run again if style changes (dark mode)
     async function renderCustomLayers() {
         // Clear if updating
@@ -339,33 +367,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Call render once map style finishes loading
     window.outdoorMap.on('style.load', renderCustomLayers);
-
-    // Dark Mode Toggle Logic
-    const darkModeSwitch = document.getElementById('dark-mode-switch');
-    if (darkModeSwitch) {
-        darkModeSwitch.addEventListener('change', (e) => {
-            currentTheme = e.target.checked ? 'dark' : 'light';
-            document.body.classList.toggle('dark-theme', e.target.checked);
-
-            // This triggers 'style.load' which re-renders the custom layers
-            const styleURL = currentTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11';
-            window.outdoorMap.setStyle(styleURL);
-        });
-    }
-
-    // Campus Perimeter Wall Toggle Logic
-    const wallToggleSwitch = document.getElementById('wall-toggle-switch');
-    if (wallToggleSwitch) {
-        wallToggleSwitch.addEventListener('change', (e) => {
-            if (window.outdoorMap.getLayer('campus-wall-layer')) {
-                window.outdoorMap.setLayoutProperty(
-                    'campus-wall-layer',
-                    'visibility',
-                    e.target.checked ? 'visible' : 'none'
-                );
-            }
-        });
-    }
 
     function makeRect(cx, cy, w, h) {
         const dx = (w / 2) * 9.2e-6;

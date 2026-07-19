@@ -1218,3 +1218,33 @@ input:checked+.slider:before {
 .room-map-label.facility i, .room-map-label.restroom i {
     color: #94a3b8;
 }
+
+/* ==========================================
+   RESPONSIVE ADJUSTMENTS FOR SMALL SCREENS
+   ========================================== */
+@media (max-height: 700px), (max-width: 768px) {
+    .floating-right-controls {
+        bottom: 24px;
+        right: 12px;
+        gap: 10px;
+    }
+    .floor-widget {
+        max-height: 180px;
+        overflow-y: auto;
+        padding: 10px 4px;
+        width: 50px;
+    }
+    .floor-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
+    }
+    .map-tools {
+        gap: 8px;
+    }
+    .tool-circle-btn {
+        width: 42px;
+        height: 42px;
+        font-size: 1rem;
+    }
+}

@@ -6,7 +6,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 500);
 
     // ==========================================
-    // 0. API URL DETERMINATION & TOAST SYSTEM
+    // 0. IMMEDIATE THEME & TOGGLE SYNCHRONIZATION
+    // ==========================================
+    let currentTheme = 'light'; // Light theme is default
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    if (themeToggleBtn) {
+        themeToggleBtn.checked = false; // Force unchecked immediately on load
+        themeToggleBtn.addEventListener('change', (e) => {
+            currentTheme = e.target.checked ? 'dark' : 'light';
+            document.body.className = currentTheme === 'dark' ? 'dark-theme' : 'light-theme';
+
+            if (window.outdoorMap) {
+                const styleURL = currentTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11';
+                window.outdoorMap.setStyle(styleURL);
+            }
+        });
+    }
+
+    const boundaryToggleBtn = document.getElementById('boundary-toggle');
+    if (boundaryToggleBtn) {
+        boundaryToggleBtn.checked = true; // Default visible
+        boundaryToggleBtn.addEventListener('change', (e) => {
+            if (window.outdoorMap && window.outdoorMap.getLayer('campus-wall-layer')) {
+                window.outdoorMap.setLayoutProperty(
+                    'campus-wall-layer',
+                    'visibility',
+                    e.target.checked ? 'visible' : 'none'
+                );
+            }
+        });
+    }
+
+    // ==========================================
+    // 0.1. API URL DETERMINATION & TOAST SYSTEM
     // ==========================================
     const isLocal = window.location.hostname === "localhost" || 
                     window.location.hostname === "127.0.0.1" || 
@@ -54,6 +86,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         Object.values(sheets).forEach(sheet => {
             if (sheet) sheet.classList.remove('open');
         });
+        document.body.classList.remove('sheet-open');
         const slideBtn = document.getElementById('slide-info-btn');
         if (slideBtn && activeBuildingId) {
             slideBtn.innerHTML = '<i class="fa-solid fa-building"></i> Show Info';
@@ -63,7 +96,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     function openSheet(sheetKey) {
         closeAllSheets();
         const target = sheets[sheetKey];
-        if (target) target.classList.add('open');
+        if (target) {
+            target.classList.add('open');
+            document.body.classList.add('sheet-open');
+        }
         hideDashboard(); // Hide landing overlay when sheet opens
         if (sheetKey === 'building') {
             const slideBtn = document.getElementById('slide-info-btn');
@@ -127,9 +163,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             const sheet = document.getElementById('building-bottom-sheet');
             if (sheet && sheet.classList.contains('open')) {
                 sheet.classList.remove('open');
+                document.body.classList.remove('sheet-open');
                 slideInfoBtn.innerHTML = '<i class="fa-solid fa-building"></i> Show Info';
             } else if (sheet) {
                 sheet.classList.add('open');
+                document.body.classList.add('sheet-open');
                 slideInfoBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Hide Info';
             }
         });
@@ -254,9 +292,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const ritBounds = [
         [80.036, 13.034],
         [80.053, 13.045]
-    ];
-
-    let currentTheme = 'light'; // Light theme is default from mockup
     window.outdoorMap = new mapboxgl.Map({
         container: 'map-container',
         style: 'mapbox://styles/mapbox/light-v11', // default light map matching mockup
@@ -1128,25 +1163,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         e.target.style.backgroundColor = is3D ? '' : 'var(--color-navy)';
         e.target.style.color = is3D ? '' : 'var(--color-white)';
     };
-
-    // Toggle Toggles logic
-    document.getElementById('boundary-toggle').addEventListener('change', (e) => {
-        if (window.outdoorMap.getLayer('campus-wall-layer')) {
-            window.outdoorMap.setLayoutProperty(
-                'campus-wall-layer',
-                'visibility',
-                e.target.checked ? 'visible' : 'none'
-            );
-        }
-    });
-
-    document.getElementById('theme-toggle').addEventListener('change', (e) => {
-        currentTheme = e.target.checked ? 'dark' : 'light';
-        document.body.className = currentTheme === 'dark' ? 'dark-theme' : 'light-theme';
-
-        const styleURL = currentTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11';
-        window.outdoorMap.setStyle(styleURL);
-    });
 
     // ==========================================
     // 11. SMART SEARCH ACTION FOR MOBILE
