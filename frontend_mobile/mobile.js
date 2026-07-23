@@ -136,61 +136,82 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Interactive Draggable Sliding Up Panel Logic
-    document.querySelectorAll('.bottom-sheet-handle').forEach(handle => {
+    document.querySelectorAll('.bottom-sheet-header, .bottom-sheet-handle').forEach(dragArea => {
         let startY = 0;
         let startHeight = 0;
         let isDragging = false;
-        
-        handle.addEventListener('touchstart', (e) => {
-            const sheet = handle.closest('.bottom-sheet');
+        let currentSheet = null;
+
+        function onPointerDown(e) {
+            // Ignore if clicking a button inside header (like close btn)
+            if (e.target.closest('button')) return;
+            
+            const sheet = dragArea.closest('.bottom-sheet');
             if (!sheet) return;
+            
             isDragging = true;
-            startY = e.touches[0].clientY;
+            currentSheet = sheet;
+            startY = e.clientY || (e.touches && e.touches[0].clientY);
             startHeight = sheet.getBoundingClientRect().height;
             sheet.classList.add('dragging');
-        }, { passive: true });
+            
+            document.addEventListener('mousemove', onPointerMove, { passive: false });
+            document.addEventListener('touchmove', onPointerMove, { passive: false });
+            document.addEventListener('mouseup', onPointerUp);
+            document.addEventListener('touchend', onPointerUp);
+        }
 
-        handle.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const sheet = handle.closest('.bottom-sheet');
-            const currentY = e.touches[0].clientY;
+        function onPointerMove(e) {
+            if (!isDragging || !currentSheet) return;
+            const currentY = e.clientY || (e.touches && e.touches[0].clientY);
+            if (currentY === undefined) return;
+            
             const deltaY = startY - currentY; // positive when dragging up
             let newHeight = startHeight + deltaY;
             
-            // Limit height between 10vh and 85vh
-            const maxH = window.innerHeight * 0.85;
+            // Limit height between 10vh and 90vh
+            const maxH = window.innerHeight * 0.90;
             if (newHeight > maxH) newHeight = maxH;
+            if (newHeight < 60) newHeight = 60; // min height during drag
             
-            sheet.style.height = newHeight + 'px';
-            e.preventDefault(); // prevent scrolling while dragging handle
-        }, { passive: false });
+            currentSheet.style.height = newHeight + 'px';
+            e.preventDefault(); // prevent scrolling while dragging
+        }
 
-        handle.addEventListener('touchend', (e) => {
-            if (!isDragging) return;
+        function onPointerUp(e) {
+            if (!isDragging || !currentSheet) return;
             isDragging = false;
-            const sheet = handle.closest('.bottom-sheet');
-            sheet.classList.remove('dragging');
             
-            const currentHeight = sheet.getBoundingClientRect().height;
-            const thresholdExpand = window.innerHeight * 0.55; // Expand if dragged past 55%
-            const thresholdClose = window.innerHeight * 0.25;  // Close if dragged below 25%
+            currentSheet.classList.remove('dragging');
+            
+            const currentHeight = currentSheet.getBoundingClientRect().height;
+            const thresholdExpand = window.innerHeight * 0.55; 
+            const thresholdClose = window.innerHeight * 0.25;  
 
-            sheet.style.height = ''; // Remove inline height to allow CSS classes to take over
+            currentSheet.style.height = ''; // Remove inline height
             
             if (currentHeight > thresholdExpand) {
-                sheet.classList.add('expanded');
+                currentSheet.classList.add('expanded');
             } else if (currentHeight < thresholdClose) {
-                sheet.classList.remove('expanded');
-                if (sheet.id === 'building-bottom-sheet') {
-                    deselectBuilding();
+                currentSheet.classList.remove('expanded');
+                if (currentSheet.id === 'building-bottom-sheet') {
+                    if (typeof deselectBuilding === 'function') deselectBuilding();
                 } else {
                     closeAllSheets();
                 }
             } else {
-                // Snap back to default 38vh
-                sheet.classList.remove('expanded');
+                currentSheet.classList.remove('expanded');
             }
-        });
+            
+            currentSheet = null;
+            document.removeEventListener('mousemove', onPointerMove);
+            document.removeEventListener('touchmove', onPointerMove);
+            document.removeEventListener('mouseup', onPointerUp);
+            document.removeEventListener('touchend', onPointerUp);
+        }
+
+        dragArea.addEventListener('mousedown', onPointerDown);
+        dragArea.addEventListener('touchstart', onPointerDown, { passive: false });
     });
 
     // ==========================================
