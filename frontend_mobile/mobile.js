@@ -135,16 +135,60 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // Handle touch swipe-down on handles to close sheets
+    // Interactive Draggable Sliding Up Panel Logic
     document.querySelectorAll('.bottom-sheet-handle').forEach(handle => {
         let startY = 0;
+        let startHeight = 0;
+        let isDragging = false;
+        
         handle.addEventListener('touchstart', (e) => {
+            const sheet = handle.closest('.bottom-sheet');
+            if (!sheet) return;
+            isDragging = true;
             startY = e.touches[0].clientY;
-        });
+            startHeight = sheet.getBoundingClientRect().height;
+            sheet.classList.add('dragging');
+        }, { passive: true });
+
         handle.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const sheet = handle.closest('.bottom-sheet');
             const currentY = e.touches[0].clientY;
-            if (currentY - startY > 40) { // Dragged down
-                closeAllSheets();
+            const deltaY = startY - currentY; // positive when dragging up
+            let newHeight = startHeight + deltaY;
+            
+            // Limit height between 10vh and 85vh
+            const maxH = window.innerHeight * 0.85;
+            if (newHeight > maxH) newHeight = maxH;
+            
+            sheet.style.height = newHeight + 'px';
+            e.preventDefault(); // prevent scrolling while dragging handle
+        }, { passive: false });
+
+        handle.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            const sheet = handle.closest('.bottom-sheet');
+            sheet.classList.remove('dragging');
+            
+            const currentHeight = sheet.getBoundingClientRect().height;
+            const thresholdExpand = window.innerHeight * 0.55; // Expand if dragged past 55%
+            const thresholdClose = window.innerHeight * 0.25;  // Close if dragged below 25%
+
+            sheet.style.height = ''; // Remove inline height to allow CSS classes to take over
+            
+            if (currentHeight > thresholdExpand) {
+                sheet.classList.add('expanded');
+            } else if (currentHeight < thresholdClose) {
+                sheet.classList.remove('expanded');
+                if (sheet.id === 'building-bottom-sheet') {
+                    deselectBuilding();
+                } else {
+                    closeAllSheets();
+                }
+            } else {
+                // Snap back to default 38vh
+                sheet.classList.remove('expanded');
             }
         });
     });
