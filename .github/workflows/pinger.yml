@@ -1,0 +1,24 @@
+name: Backend Pinger
+
+on:
+  schedule:
+    # Runs every 8 minutes
+    - cron: "*/8 * * * *"
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Backend
+        run: |
+          echo "Pinging Render Backend to prevent sleep..."
+          curl -sS https://waypoint-rit.onrender.com/docs > /dev/null || true
+          
+      - name: Ping Vercel Backend
+        run: |
+          echo "Pinging Vercel Backend to keep functions warm..."
+          curl -sS https://waypoint-rit.vercel.app/docs > /dev/null || true
+          
+      - name: Ping completed
+        run: echo "Ping job finished successfully."
